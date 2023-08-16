@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "295414608301",
+    "project_id": "u-marked",
+    "storage_bucket": "u-marked.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:295414608301:android:3b5faa947d0f3159737124",
+        "android_client_info": {
+          "package_name": "com.example.u_marked"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "295414608301-jik010mpgunqt5ho8svf19pvnuvqa458.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVNug_AW-i5HFi1WVdFH-Fkd0u_EIoEp8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "295414608301-jik010mpgunqt5ho8svf19pvnuvqa458.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "295414608301-cf8q4c5gsu3n76ooml0r3trfp48mn555.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.uMarked"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
