@@ -3,9 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
 import 'package:u_marked/reusable_widget/alertDialog.dart';
-import 'package:u_marked/screens/test.dart';
+import 'package:u_marked/screens/classList.dart';
 import '../reusable_widget/gradientBackground.dart';
-import 'myClass.dart';
 
 class homePage extends StatefulWidget {
   const homePage({Key? key}) : super(key: key);
@@ -17,37 +16,46 @@ class homePage extends StatefulWidget {
 class _homePageState extends State<homePage> {
   String _name = '';
   String _studentID = '';
+  String _lecturerID = '';
   String _batch = '';
+  var _isStudent = true;
 
   @override
   void initState() {
     super.initState();
     loadData();
-    print('end running');
   }
 
   loadData() async{
-    print('running');
     final user = FirebaseAuth.instance.currentUser!;
+    final userCollection = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    final data = await userCollection.data() as Map<String, dynamic>;
+    if(data['userType'] == 1){
+      _isStudent = true;
+    }else{
+      _isStudent = false;
+    }
     final userData = await FirebaseFirestore.instance
-        .collection('students').doc(user.uid).get();
+        .collection(_isStudent? 'students' : 'lecturers').doc(user.uid).get();
 
     if(userData.exists) {
       final data = await userData.data() as Map<String, dynamic>;
       setState(() {
         _name = data['name'];
-        _studentID = data['studentID'];
-        _batch = data['batch'];
+        if(_isStudent){
+          _studentID = data['studentID'];
+          _batch = data['batch'];
+        }else{
+          _lecturerID = data['lecturerID'];
+        }
       });
     }else{
       print('User data not found');
     }
-    // print(data['name'].toString());
   }
 
   @override
   Widget build(BuildContext context) {
-
     return SafeArea(
         child: Container(
           decoration: homeBackgroundDecoration,
@@ -67,7 +75,7 @@ class _homePageState extends State<homePage> {
                             Text(_name!,
                                 style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold,)),
                             SizedBox(height: 4,),
-                            Text(_studentID!,style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                            Text(_isStudent? _studentID! : _lecturerID,style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                             Text(_batch!,style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                           ],
                         ),
@@ -77,6 +85,7 @@ class _homePageState extends State<homePage> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             IconButton(onPressed: (){
+                              // FirebaseAuth.instance.signOut();
                               Alerts().logoutAlertDialog(context);
                             },
                               icon: Icon(Icons.logout,size: 40,),
