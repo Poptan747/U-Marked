@@ -118,7 +118,7 @@ class _homePageState extends State<homePage> {
                                       IconButton(onPressed: (){
                                         Navigator.of(context).push(
                                           MaterialPageRoute(
-                                            builder: (context) => UserOrdersDisplay(),
+                                            builder: (context) => myClassList(),
                                           ),
                                         );
                                       },

@@ -4,11 +4,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:getwidget/getwidget.dart';
 import 'package:u_marked/reusable_widget/appBar.dart';
 import 'package:u_marked/reusable_widget/gradientBackground.dart';
+import 'package:u_marked/screens/classDetail.dart';
 
-class UserOrdersDisplay extends StatefulWidget {
+class myClassList extends StatefulWidget {
 
   @override
-  State<UserOrdersDisplay> createState() => _UserOrdersDisplayState();
+  State<myClassList> createState() => _myClassListState();
 }
 
 var _nameMap = <String, String>{};
@@ -16,13 +17,14 @@ var _subjectIDMap = <String, String>{};
 var _subjectNameMap = <String, String>{};
 var _timeMap = <String, String>{};
 var _dateMap = <String, String>{};
+var _passData = <String, dynamic>{};
 var _isStudent = true;
 bool _isLoading = true;
 var _noData = true;
 var _uID='';
 var _cardTitle = <String, String>{};
 
-class _UserOrdersDisplayState extends State<UserOrdersDisplay> {
+class _myClassListState extends State<myClassList> {
   @override
   void initState() {
     preloadData();
@@ -41,6 +43,7 @@ class _UserOrdersDisplayState extends State<UserOrdersDisplay> {
     }else{
       _isStudent = false;
     }
+    _passData['isStudent'] = _isStudent;
 
     var classCollection = await FirebaseFirestore.instance
         .collection(_isStudent? 'students': 'lecturers')
@@ -60,6 +63,7 @@ class _UserOrdersDisplayState extends State<UserOrdersDisplay> {
           });
           var orderData = doc.data() as Map<String, dynamic>;
           var classID = orderData['classID'];
+          _passData['classID'] = classID;
           loadData(classID);
         }else{
           setState(() {
@@ -172,6 +176,11 @@ StreamBuilder showClassList = StreamBuilder(
           icon: const Icon(Icons.keyboard_double_arrow_right),
           onTap: (){
             print('tapped');
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => classDetail(classID: classID, isStudent: _isStudent,),
+              ),
+            );
           },
         );
       },
