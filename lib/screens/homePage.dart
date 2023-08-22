@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
 import 'package:u_marked/reusable_widget/alertDialog.dart';
@@ -20,10 +21,19 @@ class _homePageState extends State<homePage> {
   String _batch = '';
   var _isStudent = true;
 
+  void setupPushNotification() async{
+    final fcm = FirebaseMessaging.instance;
+    await fcm.requestPermission();
+    final token = await fcm.getToken();
+    print('TOKEN HERE');
+    print(token);
+  }
+
   @override
   void initState() {
     super.initState();
     loadData();
+    setupPushNotification();
   }
 
   loadData() async{
@@ -39,7 +49,7 @@ class _homePageState extends State<homePage> {
         .collection(_isStudent? 'students' : 'lecturers').doc(user.uid).get();
 
     var uID = user.uid;
-    print('isStudent $_isStudent -- UID $uID');
+    // print('isStudent $_isStudent -- UID $uID');
     if(userData.exists) {
       final data = await userData.data() as Map<String, dynamic>;
       setState(() {

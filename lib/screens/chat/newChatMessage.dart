@@ -111,6 +111,11 @@ class _newMessageState extends State<newMessage> {
       'createAt': Timestamp.now(),
     });
 
+    FirebaseFirestore.instance.collection('chatrooms').doc(chatroomID).set({
+      'latestMessage' : enteredMessage,
+      'latestMessageTimestamp' : Timestamp.now(),
+    });
+
     _messageController.clear();
   }
 

@@ -72,3 +72,13 @@ GFAppBar chatroomAppBar(String userName) {
     title: Text(userName),
   );
 }
+
+GFAppBar inboxAppBar = GFAppBar(
+  centerTitle: true,
+  elevation: 0,
+  // automaticallyImplyLeading: false,
+  flexibleSpace: Container(
+    decoration: myClassAppBarBackgroundDecoration,
+  ),
+  title: Text("Inbox"),
+);
