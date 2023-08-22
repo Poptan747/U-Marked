@@ -18,6 +18,7 @@ var _showDataMap = <String, String>{};
 class _classDetailState extends State<classDetail> {
 
   var _appBarTitle ='';
+  var _lecID='';
   var _isLoading = true;
 
   @override
@@ -54,6 +55,7 @@ class _classDetailState extends State<classDetail> {
       _showDataMap['subjectName'] = subjectData['name'];
       _showDataMap['location'] = classData['locationID'];
       _showDataMap['lecturerName'] = lecturerData['name'];
+      _lecID = classData['lecturerID'];
       _showDataMap['lectureHour'] = classData['lectureHour'];
       _showDataMap['lectureDay'] = classData['lectureDay'];
       _isLoading = false;
@@ -65,7 +67,7 @@ class _classDetailState extends State<classDetail> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: classDetailsAppBar(_appBarTitle,widget.classID),
+      appBar: classDetailsAppBar(_appBarTitle,_lecID,widget.classID,context),
       body: SafeArea(
         child: Container(
           height: MediaQuery.of(context).size.height,

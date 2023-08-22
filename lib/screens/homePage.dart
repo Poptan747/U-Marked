@@ -27,17 +27,19 @@ class _homePageState extends State<homePage> {
   }
 
   loadData() async{
-    final user = FirebaseAuth.instance.currentUser!;
-    final userCollection = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-    final data = await userCollection.data() as Map<String, dynamic>;
+    var user = FirebaseAuth.instance.currentUser!;
+    var userCollection = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    var data = await userCollection.data() as Map<String, dynamic>;
     if(data['userType'] == 1){
       _isStudent = true;
     }else{
       _isStudent = false;
     }
-    final userData = await FirebaseFirestore.instance
+    var userData = await FirebaseFirestore.instance
         .collection(_isStudent? 'students' : 'lecturers').doc(user.uid).get();
 
+    var uID = user.uid;
+    print('isStudent $_isStudent -- UID $uID');
     if(userData.exists) {
       final data = await userData.data() as Map<String, dynamic>;
       setState(() {
@@ -59,6 +61,7 @@ class _homePageState extends State<homePage> {
     return SafeArea(
         child: Container(
           decoration: homeBackgroundDecoration,
+          height: MediaQuery.of(context).size.height,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(8, 11, 8, 8),
             child: SingleChildScrollView(
@@ -74,7 +77,6 @@ class _homePageState extends State<homePage> {
                             Text('Hello,', style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.bold,)),
                             Text(_name!,
                                 style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold,)),
-                            SizedBox(height: 4,),
                             Text(_isStudent? _studentID! : _lecturerID,style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                             Text(_batch!,style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                           ],
@@ -147,6 +149,8 @@ class _homePageState extends State<homePage> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 20),
+                  const Divider(color: Colors.white,thickness: 3,),
                   const SizedBox(height: 20),
                   Row(
                     children: [

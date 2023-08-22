@@ -1,5 +1,3 @@
-import 'dart:js';
-
 import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
 import 'package:u_marked/screens/memberList.dart';
@@ -25,7 +23,7 @@ GFAppBar myClassAppBar = GFAppBar(
   ],
 );
 
-GFAppBar classDetailsAppBar(String className,String classID){
+GFAppBar classDetailsAppBar(String className,String lecturerID, String classID, BuildContext context){
   return GFAppBar(
     centerTitle: true,
     elevation: 0,
@@ -41,9 +39,9 @@ GFAppBar classDetailsAppBar(String className,String classID){
         color: Colors.white,
       ),
       onPressed: () {
-        Navigator.of(context as BuildContext).push(
+        Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => memberList(classID: classID),
+            builder: (context) => memberList(classID: classID, lecturerID: lecturerID,),
           ),
         );
       },
@@ -53,3 +51,24 @@ GFAppBar classDetailsAppBar(String className,String classID){
   );
 }
 
+GFAppBar memberListAppBar = GFAppBar(
+  centerTitle: true,
+  elevation: 0,
+  // automaticallyImplyLeading: false,
+  flexibleSpace: Container(
+    decoration: myClassAppBarBackgroundDecoration,
+  ),
+  title: Text("Member List"),
+);
+
+GFAppBar chatroomAppBar(String userName) {
+  return GFAppBar(
+    centerTitle: true,
+    elevation: 0,
+    // automaticallyImplyLeading: false,
+    flexibleSpace: Container(
+      decoration: myClassAppBarBackgroundDecoration,
+    ),
+    title: Text(userName),
+  );
+}
