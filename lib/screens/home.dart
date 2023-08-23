@@ -24,7 +24,7 @@ class _homeState extends State<home> {
   List pages = [
     homePage(),
     inboxPage(),
-    settingsPage(),
+    SettingsPage(),
   ];
   @override
   Widget build(BuildContext context) {

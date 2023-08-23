@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:u_marked/reusable_widget/appBar.dart';
 import 'package:u_marked/reusable_widget/gradientBackground.dart';
+import 'package:u_marked/screens/attendance.dart';
 
 
 class classDetail extends StatefulWidget {
@@ -83,32 +84,42 @@ class _classDetailState extends State<classDetail> {
                   ),
                 ),
                 SizedBox(height: 20,),
-                Container(
-                  color: Colors.white24,
-                  child: DefaultTabController(
-                    length: 2,
-                    child: Column(
-                      children: [
-                        const TabBar(
-                            tabs: [
-                              Tab(child: Text('Q&A',style: TextStyle(color: Colors.black),)),
-                              Tab(child: Text('Attendance',style: TextStyle(color: Colors.black),)),
-                            ]),
-                        Container(
-                          height: 500,
-                          child: TabBarView(
-                            children: [
-                              // Content for Tab 1
-                              Center(child: Text('Tab 1 content')),
-                              // Content for Tab 2
-                              Center(child: Text('Tab 2 content')),
-                            ],
-                          ),
-                        )
-                      ],
+                Padding(
+                  padding: const EdgeInsets.only(left: 20,right: 20),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                    ),
+                    child: DefaultTabController(
+                      length: 2,
+                      child: Column(
+                        children: [
+                          const TabBar(
+                              tabs: [
+                                Tab(child: Text('Q&A',style: TextStyle(color: Colors.black),)),
+                                Tab(child: Text('Attendance',style: TextStyle(color: Colors.black),)),
+                              ]),
+                          Container(
+                            height: 500,
+                            child: TabBarView(
+                              children: [
+                                // Content for Tab 1
+                                Center(child: Text('No Post Available.',style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 25
+                                ))),
+                                // Content for Tab 2
+                                Center(child: attendanceWidget(isStudent: widget.isStudent,classID: widget.classID,)),
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
                     ),
                   ),
                 ),
+                SizedBox(height: 10,)
               ],
             ),
           ),

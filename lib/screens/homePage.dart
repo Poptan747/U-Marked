@@ -245,16 +245,6 @@ class _homePageState extends State<homePage> {
                                                   color: Colors.white,
                                                   icon: Icon(Icons.keyboard_double_arrow_right)
                                               ),
-                                              GFListTile(
-                                                  padding: EdgeInsets.all(20),
-                                                  avatar:GFAvatar(
-                                                    backgroundImage: AssetImage('images/location/IEB.jpg'),
-                                                  ),
-                                                  titleText:'BGEN1013 Academic English',
-                                                  subTitleText:'10.00am-12-00am, 13/7/2023',
-                                                  color: Colors.white,
-                                                  icon: Icon(Icons.keyboard_double_arrow_right)
-                                              ),
                                             ],
                                           ),
                                         ],

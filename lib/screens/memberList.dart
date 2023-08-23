@@ -129,7 +129,7 @@ class _memberListState extends State<memberList> {
               ),
               const Divider(thickness: 5,),
               Expanded(
-                  child: _isLoading? const Center(child: CircularProgressIndicator(color: Colors.white,)) : showMemberList
+                  child: _isLoading? const Center(child: CircularProgressIndicator(color: Colors.white,)) : _buildMemberListStream()
               )
             ],
           ),
@@ -137,6 +137,48 @@ class _memberListState extends State<memberList> {
       ),
     );
   }
+}
+
+Widget _buildMemberListStream() {
+  return StreamBuilder(
+    stream: FirebaseFirestore.instance.collection('classes').doc(_classID).collection('members').snapshots(),
+    builder: (context, orderSnapshot) {
+      if (orderSnapshot.connectionState == ConnectionState.waiting) {
+        return const Center(child: Text('Loading....',style: TextStyle(color: Colors.white),));
+      }
+      if(orderSnapshot.hasError){
+        print(orderSnapshot.error);
+      }
+      return ListView.builder(
+        itemCount: orderSnapshot.data!.docs.length,
+        itemBuilder: (context, index) {
+          var orderData = orderSnapshot.data!.docs[index].data() as Map<String, dynamic>;
+          var uID = orderData['uid'];
+          // print(_nameMap[classID]); // Print the corresponding class name
+          return GFListTile(
+            padding: const EdgeInsets.all(20),
+            titleText: _nameMap[uID],
+            subTitleText:'${_studentIDMap[uID] ?? "Loading EMPTY"} \n${_batchMap[uID] ?? "..."}',
+            color: Colors.white,
+            icon: _currentUser.uid == uID ? Icon(Icons.account_circle,color: Colors.black,) : Icon(Icons.chat,color: Colors.blue,),
+            onTap: (){
+              if(_currentUser.uid == uID){
+                print('NOPE');
+                print(_currentUser.uid);
+              }else{
+                print('tapped');
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => chatroom(userID1: _currentUser.uid, userID2: uID),
+                  ),
+                );
+              }
+            },
+          );
+        },
+      );
+    },
+  );
 }
 
 StreamBuilder showMemberList = StreamBuilder(
