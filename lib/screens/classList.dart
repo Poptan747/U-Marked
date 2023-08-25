@@ -4,11 +4,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:getwidget/getwidget.dart';
 import 'package:u_marked/reusable_widget/appBar.dart';
 import 'package:u_marked/reusable_widget/gradientBackground.dart';
+import 'package:u_marked/screens/classDetail.dart';
 
-class UserOrdersDisplay extends StatefulWidget {
+class myClassList extends StatefulWidget {
 
   @override
-  State<UserOrdersDisplay> createState() => _UserOrdersDisplayState();
+  State<myClassList> createState() => _myClassListState();
 }
 
 var _nameMap = <String, String>{};
@@ -16,31 +17,56 @@ var _subjectIDMap = <String, String>{};
 var _subjectNameMap = <String, String>{};
 var _timeMap = <String, String>{};
 var _dateMap = <String, String>{};
+var _passData = <String, dynamic>{};
 var _isStudent = true;
 bool _isLoading = true;
 var _noData = true;
 var _uID='';
 var _cardTitle = <String, String>{};
 
-class _UserOrdersDisplayState extends State<UserOrdersDisplay> {
+class _myClassListState extends State<myClassList> {
   @override
   void initState() {
-    preloadData();
     super.initState();
+    defaultData();
+    preloadData();
+  }
+
+  defaultData(){
+    setState(() {
+      _isLoading = true;
+      _nameMap.clear();
+      _subjectIDMap.clear();
+      _subjectNameMap.clear();
+      _timeMap.clear();
+      _dateMap.clear();
+      _passData.clear();
+      _isStudent = true;
+      _noData = true;
+      _uID='';
+      _cardTitle.clear();
+    });
   }
 
   preloadData() async {
-    _isLoading = true;
-    var user = FirebaseAuth.instance.currentUser!;
-    _uID = user.uid;
+    var user;
+    setState(() {
+      user = FirebaseAuth.instance.currentUser!;
+      _uID = user.uid;
+    });
+
     var userCollection = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
     var data = await userCollection.data() as Map<String, dynamic>;
 
-    if(data['userType'] == 1){
-      _isStudent = true;
-    }else{
-      _isStudent = false;
-    }
+    setState(() {
+      if(data['userType'] == 1){
+        _isStudent = true;
+      }else{
+        _isStudent = false;
+      }
+      _passData['isStudent'] = _isStudent;
+    });
+
 
     var classCollection = await FirebaseFirestore.instance
         .collection(_isStudent? 'students': 'lecturers')
@@ -60,6 +86,7 @@ class _UserOrdersDisplayState extends State<UserOrdersDisplay> {
           });
           var orderData = doc.data() as Map<String, dynamic>;
           var classID = orderData['classID'];
+          _passData['classID'] = classID;
           loadData(classID);
         }else{
           setState(() {
@@ -107,16 +134,62 @@ class _UserOrdersDisplayState extends State<UserOrdersDisplay> {
 
         // Formatting card title
         if(_nameMap[classID] == null || _nameMap[classID]!.isEmpty){
-          _cardTitle[classID] = (_subjectIDMap[classID]! + _subjectNameMap[classID]!)! ;
+          _cardTitle[classID] = ('${_subjectIDMap[classID]!} ${_subjectNameMap[classID]!}')!;
         }else{
           _cardTitle[classID] = ('${_nameMap[classID]!}\n${_subjectIDMap[classID]!}${_subjectNameMap[classID]!}')!;
         }
         _isLoading = false;
+        print('thru here again');
       });
     } else {
       _isLoading = false;
       print('Class data not found');
     }
+  }
+
+  Widget _buildClassListStream() {
+    return StreamBuilder(
+      // initialData: {'isStudent': _isStudent, 'uID': _uID},
+      stream: FirebaseFirestore.instance.collection(_isStudent? 'students' : 'lecturers').doc(_uID).collection('classes').snapshots(),
+      builder: (context, orderSnapshot) {
+        // print(orderSnapshot.data!.docs.length);
+        if (orderSnapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: Text('Loading....',style: TextStyle(color: Colors.white),));
+        }
+
+        if(orderSnapshot.hasError){
+          print(orderSnapshot.error);
+        }
+
+        return ListView.builder(
+          itemCount: orderSnapshot.data!.docs.length,
+          itemBuilder: (context, index) {
+            var orderData = orderSnapshot.data!.docs[index].data() as Map<String, dynamic>;
+            var classID = orderData['classID'];
+            return GFListTile(
+              padding: EdgeInsets.all(20),
+              avatar:GFAvatar(
+                backgroundImage: AssetImage('images/location/IEB.jpg'),
+                size: GFSize.LARGE,
+                shape: GFAvatarShape.standard,
+              ),
+              titleText: _cardTitle[classID],
+              subTitleText:'${_timeMap[classID] ?? "Loading EMPTY"} \nCreate at ${_dateMap[classID] ?? "..."}',
+              color: Colors.white,
+              icon: const Icon(Icons.keyboard_double_arrow_right),
+              onTap: (){
+                print('tapped');
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => classDetail(classID: classID, isStudent: _isStudent,),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -127,8 +200,7 @@ class _UserOrdersDisplayState extends State<UserOrdersDisplay> {
       body: Container(
         decoration: homeBackgroundDecoration,
         child: _isLoading? Center(child: CircularProgressIndicator(color: Colors.white,)) :
-          _noData? Center(child: showEmptyClass) :
-          showClassList
+          _noData? Center(child: showEmptyClass) : _buildClassListStream()
       ),
     );
   }
@@ -143,6 +215,7 @@ Text showEmptyClass = const Text(
 );
 
 StreamBuilder showClassList = StreamBuilder(
+  // initialData: {'isStudent': _isStudent, 'uID': _uID},
   stream: FirebaseFirestore.instance.collection(_isStudent? 'students' : 'lecturers').doc(_uID).collection('classes').snapshots(),
   builder: (context, orderSnapshot) {
     if (orderSnapshot.connectionState == ConnectionState.waiting) {
@@ -156,9 +229,15 @@ StreamBuilder showClassList = StreamBuilder(
     return ListView.builder(
       itemCount: orderSnapshot.data!.docs.length,
       itemBuilder: (context, index) {
+
         var orderData = orderSnapshot.data!.docs[index].data() as Map<String, dynamic>;
         var classID = orderData['classID'];
         // print(_nameMap[classID]); // Print the corresponding class name
+        // print(orderSnapshot.data!.docs.length);
+        // print(orderData);
+        // print(_isStudent);
+        // print(_uID);
+        // print(orderSnapshot.data!.docs);
         return GFListTile(
           padding: EdgeInsets.all(20),
           avatar:GFAvatar(
@@ -172,6 +251,11 @@ StreamBuilder showClassList = StreamBuilder(
           icon: const Icon(Icons.keyboard_double_arrow_right),
           onTap: (){
             print('tapped');
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => classDetail(classID: classID, isStudent: _isStudent,),
+              ),
+            );
           },
         );
       },

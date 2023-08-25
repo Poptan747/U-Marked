@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
 import 'package:u_marked/reusable_widget/alertDialog.dart';
@@ -20,24 +21,35 @@ class _homePageState extends State<homePage> {
   String _batch = '';
   var _isStudent = true;
 
+  void setupPushNotification() async{
+    final fcm = FirebaseMessaging.instance;
+    await fcm.requestPermission();
+    final token = await fcm.getToken();
+    print('TOKEN HERE');
+    print(token);
+  }
+
   @override
   void initState() {
     super.initState();
     loadData();
+    setupPushNotification();
   }
 
   loadData() async{
-    final user = FirebaseAuth.instance.currentUser!;
-    final userCollection = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-    final data = await userCollection.data() as Map<String, dynamic>;
+    var user = FirebaseAuth.instance.currentUser!;
+    var userCollection = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    var data = await userCollection.data() as Map<String, dynamic>;
     if(data['userType'] == 1){
       _isStudent = true;
     }else{
       _isStudent = false;
     }
-    final userData = await FirebaseFirestore.instance
+    var userData = await FirebaseFirestore.instance
         .collection(_isStudent? 'students' : 'lecturers').doc(user.uid).get();
 
+    var uID = user.uid;
+    // print('isStudent $_isStudent -- UID $uID');
     if(userData.exists) {
       final data = await userData.data() as Map<String, dynamic>;
       setState(() {
@@ -59,6 +71,7 @@ class _homePageState extends State<homePage> {
     return SafeArea(
         child: Container(
           decoration: homeBackgroundDecoration,
+          height: MediaQuery.of(context).size.height,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(8, 11, 8, 8),
             child: SingleChildScrollView(
@@ -74,7 +87,6 @@ class _homePageState extends State<homePage> {
                             Text('Hello,', style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.bold,)),
                             Text(_name!,
                                 style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold,)),
-                            SizedBox(height: 4,),
                             Text(_isStudent? _studentID! : _lecturerID,style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                             Text(_batch!,style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                           ],
@@ -118,7 +130,7 @@ class _homePageState extends State<homePage> {
                                       IconButton(onPressed: (){
                                         Navigator.of(context).push(
                                           MaterialPageRoute(
-                                            builder: (context) => UserOrdersDisplay(),
+                                            builder: (context) => myClassList(),
                                           ),
                                         );
                                       },
@@ -147,6 +159,8 @@ class _homePageState extends State<homePage> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 20),
+                  const Divider(color: Colors.white,thickness: 3,),
                   const SizedBox(height: 20),
                   Row(
                     children: [
@@ -191,16 +205,6 @@ class _homePageState extends State<homePage> {
                                         children: [
                                           Column(
                                             children: [
-                                              GFListTile(
-                                                  padding: EdgeInsets.all(20),
-                                                  avatar:GFAvatar(
-                                                    backgroundImage: AssetImage('images/location/IEB.jpg'),
-                                                  ),
-                                                  titleText:'BGEN1013 Academic English',
-                                                  subTitleText:'10.00am-12-00am, 13/7/2023',
-                                                  color: Colors.white,
-                                                  icon: Icon(Icons.keyboard_double_arrow_right)
-                                              ),
                                               GFListTile(
                                                   padding: EdgeInsets.all(20),
                                                   avatar:GFAvatar(

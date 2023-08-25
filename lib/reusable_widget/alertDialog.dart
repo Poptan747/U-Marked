@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 
 class Alerts {
-  void logoutAlertDialog(BuildContext context) {
+  void logoutAlertDialog(context) {
     showDialog(
       context: context,
       builder: (BuildContext context) => AlertDialog(
@@ -28,6 +28,40 @@ class Alerts {
           ),
         ],
       ),
+    );
+  }
+
+  void timePickerAlertDialog(BuildContext context){
+    showDialog(
+        context: context,
+        builder: (BuildContext context) =>
+            AlertDialog(
+              title: const Text('Alert'),
+              content: const Text('The "End at" time must be after "Start at" time'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.pop(context, 'Ok'),
+                  child: const Text('Ok'),
+                ),
+              ],
+            ),
+    );
+  }
+
+  void startAtFirstAlertDialog(BuildContext context){
+    showDialog(
+      context: context,
+      builder: (BuildContext context) =>
+          AlertDialog(
+            title: const Text('Alert'),
+            content: const Text('Please select "Start at" time first.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'Ok'),
+                child: const Text('Ok'),
+              ),
+            ],
+          ),
     );
   }
 }

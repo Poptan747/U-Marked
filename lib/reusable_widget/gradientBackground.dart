@@ -59,12 +59,12 @@ BoxDecoration myClassAppBarBackgroundDecoration =
 BoxDecoration(
   // border: Border.all(color: Colors.black),
     gradient: LinearGradient(
-        begin: Alignment.bottomLeft,
-        end: Alignment.topRight,
+        begin: Alignment.bottomCenter,
+        end: Alignment.topCenter,
         colors: [
-          Color(0xFF066cff),
           Colors.blue.shade900,
           Color(0xFF066cff),
+          Colors.blue.shade900,
         ],
     )
 );

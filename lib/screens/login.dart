@@ -24,7 +24,7 @@ class _loginPageState extends State<loginPage> {
     _form.currentState!.save();
 
     try{
-      final _userCredentials = await _firebase.signInWithEmailAndPassword(
+      var _userCredentials = await _firebase.signInWithEmailAndPassword(
           email: _enteredEmail, password: _enteredPassword
       );
 
@@ -34,7 +34,7 @@ class _loginPageState extends State<loginPage> {
       );
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
 
-      // print(_userCredentials);
+      print(_userCredentials);
     }on FirebaseAuthException catch(error){
       var snackBar = SnackBar(
         content: Text(error.message?? 'Auth failed'),
