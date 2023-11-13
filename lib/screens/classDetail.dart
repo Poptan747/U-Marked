@@ -136,75 +136,77 @@ return Container(
   decoration: const BoxDecoration(
     borderRadius: BorderRadius.all(Radius.circular(10)),
     color: Colors.white,),
-  child: Row(
-    children: [
-      Expanded(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-            child: AspectRatio(aspectRatio: 1,
-              child: ClipRRect(
-                  borderRadius: BorderRadius.circular(5),
-                  child: Image.asset('images/location/IEB.jpg',fit: BoxFit.cover,)
-              )
-            ),
+  child: SingleChildScrollView(
+    child: Row(
+      children: [
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+              child: AspectRatio(aspectRatio: 1,
+                child: ClipRRect(
+                    borderRadius: BorderRadius.circular(5),
+                    child: Image.asset('images/location/IEB.jpg',fit: BoxFit.cover,)
+                )
+              ),
+          ),
         ),
-      ),
-      Expanded(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text('Class Name: ',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w500),),
-                  Expanded(child: Text('${_showDataMap["className"]}',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w300),)),
-                ],
-              ),
-              Divider(thickness: 3),
-              Row(
-                children: [
-                  Text('Subject Code: ',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w500),),
-                  Expanded(child: Text('${_showDataMap["subjectCode"]}',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w300),)),
-                ],
-              ),
-              Divider(thickness: 3),
-              Row(
-                children: [
-                  Text('Subject Name: ',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w500),),
-                  Expanded(child: Text('${_showDataMap["subjectName"]}',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w300),)),
-                ],
-              ),
-              Divider(thickness: 3),
-              Row(
-                children: [
-                  Text('Venue: ',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w500),),
-                  Expanded(child: Text('${_showDataMap["location"]}',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w300),)),
-                ],
-              ),
-              Divider(thickness: 3),
-              Row(
-                children: [
-                  Text('Lecturer: ',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w500),),
-                  Expanded(child: Text('${_showDataMap["lecturerName"]}',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w300),)),
-                ],
-              ),
-              Divider(thickness: 3),
-              Row(
-                children: [
-                  Text('Lecture Hour: ',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w500),),
-                  Expanded(child: Text('${_showDataMap["lectureHour"]}',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w300),)),
-                ],
-              ),
-              Divider(thickness: 3),
-              Row(
-                children: [
-                  Text('Lecture Day: ',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w500),),
-                  Text('${_showDataMap["lectureDay"]}',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w300),),
-                ],
-              ),
-            ],
-        ),
-      )
-    ],
+        Expanded(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text('Class Name: ',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w500),),
+                    Expanded(child: Text('${_showDataMap["className"]}',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w300),)),
+                  ],
+                ),
+                Divider(thickness: 3),
+                Row(
+                  children: [
+                    Text('Subject Code: ',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w500),),
+                    Expanded(child: Text('${_showDataMap["subjectCode"]}',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w300),)),
+                  ],
+                ),
+                Divider(thickness: 3),
+                Row(
+                  children: [
+                    Text('Subject Name: ',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w500),),
+                    Expanded(child: Text('${_showDataMap["subjectName"]}',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w300),)),
+                  ],
+                ),
+                Divider(thickness: 3),
+                Row(
+                  children: [
+                    Text('Venue: ',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w500),),
+                    Expanded(child: Text('${_showDataMap["location"]}',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w300),)),
+                  ],
+                ),
+                Divider(thickness: 3),
+                Row(
+                  children: [
+                    Text('Lecturer: ',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w500),),
+                    Expanded(child: Text('${_showDataMap["lecturerName"]}',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w300),)),
+                  ],
+                ),
+                Divider(thickness: 3),
+                Row(
+                  children: [
+                    Text('Lecture Hour: ',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w500),),
+                    Expanded(child: Text('${_showDataMap["lectureHour"]}',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w300),)),
+                  ],
+                ),
+                Divider(thickness: 3),
+                Row(
+                  children: [
+                    Text('Lecture Day: ',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w500),),
+                    Text('${_showDataMap["lectureDay"]}',style: TextStyle(fontSize: _fontSize,fontWeight: FontWeight.w300),),
+                  ],
+                ),
+              ],
+          ),
+        )
+      ],
+    ),
   ),
 );}

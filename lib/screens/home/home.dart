@@ -1,8 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:u_marked/screens/homePage.dart';
-import 'package:u_marked/screens/inbox.dart';
-import 'package:u_marked/screens/settings.dart';
-import 'myClass.dart';
+import 'package:u_marked/models/userModel.dart';
+import 'package:u_marked/screens/admin/adminHome.dart';
+import 'package:u_marked/screens/home/homePage.dart';
+import 'package:u_marked/screens/home/inbox.dart';
+import 'package:u_marked/screens/home/settings.dart';
+import '../myClass.dart';
 
 
 class home extends StatefulWidget {
@@ -17,7 +20,6 @@ class _homeState extends State<home> {
   @override
   void initState() {
     super.initState();
-    homePage();
   }
 
   int _currentIndex = 0;

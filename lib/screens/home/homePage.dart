@@ -3,9 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
+import 'package:u_marked/models/userModel.dart';
 import 'package:u_marked/reusable_widget/alertDialog.dart';
 import 'package:u_marked/screens/classList.dart';
-import '../reusable_widget/gradientBackground.dart';
+import '../../reusable_widget/gradientBackground.dart';
 
 class homePage extends StatefulWidget {
   const homePage({Key? key}) : super(key: key);
@@ -38,32 +39,26 @@ class _homePageState extends State<homePage> {
 
   loadData() async{
     var user = FirebaseAuth.instance.currentUser!;
+    print("TEST USER EMAIL VERIFY");
+    print(user.emailVerified);
     var userCollection = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
     var data = await userCollection.data() as Map<String, dynamic>;
-    if(data['userType'] == 1){
+
+    UserDetail newUser = UserDetail(uid: user.uid, email: data['email'], userType: data['userType']);
+    Map<String, dynamic> userDetailmap = await newUser.getUserDetail();
+
+    if(userDetailmap['userType'] == 1){
       _isStudent = true;
     }else{
       _isStudent = false;
     }
-    var userData = await FirebaseFirestore.instance
-        .collection(_isStudent? 'students' : 'lecturers').doc(user.uid).get();
 
-    var uID = user.uid;
-    // print('isStudent $_isStudent -- UID $uID');
-    if(userData.exists) {
-      final data = await userData.data() as Map<String, dynamic>;
       setState(() {
-        _name = data['name'];
-        if(_isStudent){
-          _studentID = data['studentID'];
-          _batch = data['batch'];
-        }else{
-          _lecturerID = data['lecturerID'];
-        }
+        _name = userDetailmap['name'];
+        _studentID = userDetailmap['studentID'];
+        _batch = userDetailmap['batch'];
+        _lecturerID = userDetailmap['lecturerID'];
       });
-    }else{
-      print('User data not found');
-    }
   }
 
   @override
@@ -81,15 +76,21 @@ class _homePageState extends State<homePage> {
                   Row(
                     children: [
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Hello,', style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.bold,)),
-                            Text(_name!,
-                                style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold,)),
-                            Text(_isStudent? _studentID! : _lecturerID,style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                            Text(_batch!,style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                          ],
+                        flex: 3,
+                        child: Container(
+                          padding: const EdgeInsets.fromLTRB(10,10,10,10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(6),
+                            color: Colors.blueAccent,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Hello, $_name', style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.bold,)),
+                              Text(_isStudent? _studentID! : _lecturerID,style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                              Text(_batch!,style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                         ),
                       ),
                       Expanded(

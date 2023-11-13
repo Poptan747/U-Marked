@@ -1,11 +1,14 @@
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:u_marked/models/userModel.dart';
+import 'package:u_marked/screens/admin/adminHome.dart';
 import 'firebase_options.dart';
 //--------------------------------------------------
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 //--------------------------------------------------
-import 'package:u_marked/screens/home.dart';
+import 'package:u_marked/screens/home/home.dart';
 import 'screens/login.dart';
 
 main() async {
@@ -13,6 +16,7 @@ main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,overlays: [SystemUiOverlay.top]);
   runApp(const MyApp());
 }
 
@@ -23,20 +27,44 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
-        statusBarColor: Color(0xFF066cff),
+          statusBarColor: Color(0xFF066cff),
+          statusBarIconBrightness: Brightness.light,
+          systemNavigationBarColor: Color(0xFF066cff),
+          systemNavigationBarIconBrightness: Brightness.light
       ),
-    child: MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: StreamBuilder(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (ctx, snapshot){
-          if (snapshot.hasData){
-            return home();
-          }
-          return loginPage();
-        },
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: StreamBuilder(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (ctx, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return CircularProgressIndicator(); // Example loading indicator.
+            }
+            if (snapshot.hasData && snapshot.data != null) {
+              return FutureBuilder(
+                future: _handleAuthState(snapshot.data!),
+                builder: (BuildContext context, AsyncSnapshot<Widget> snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return LinearProgressIndicator();
+                  }
+                  return snapshot.data ?? loginPage();
+                },
+              );
+            }
+            return loginPage();
+          },
+        ),
       ),
-    ));
+    );
+  }
+
+  Future<Widget> _handleAuthState(User user) async {
+    Admin tempAdmin = new Admin(uid: user.uid);
+    if (await tempAdmin.checkUserType()) {
+      return adminHome();
+    } else {
+      return home();
+    }
   }
 }
 /**

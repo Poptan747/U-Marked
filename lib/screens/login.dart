@@ -61,7 +61,7 @@ class _loginPageState extends State<loginPage> {
                         child: Image.asset('images/U-Marked.png')
                     ),
                     Text('Login', style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold,color: Colors.lightBlue.shade900),),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 100),
                     Form(
                       key: _form,
                       child: Padding(
@@ -108,7 +108,6 @@ class _loginPageState extends State<loginPage> {
                             const SizedBox(height: 16),
                             ElevatedButton(
                               onPressed: () {
-                                print('pressed');
                                 // Navigator.of(context).push(
                                 //   MaterialPageRoute(
                                 //     builder: (context) => const home(),
