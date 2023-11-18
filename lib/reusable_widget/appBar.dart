@@ -213,3 +213,15 @@ GFAppBar locationListAppBar(BuildContext context) {
     ],
   );
 }
+
+GFAppBar profilePageAppBar(BuildContext context) {
+  return GFAppBar(
+    centerTitle: true,
+    elevation: 0,
+    // automaticallyImplyLeading: false,
+    flexibleSpace: Container(
+      decoration: myClassAppBarBackgroundDecoration,
+    ),
+    title: const Text("Profile"),
+  );
+}

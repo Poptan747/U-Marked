@@ -6,6 +6,7 @@ import 'package:getwidget/getwidget.dart';
 import 'package:u_marked/models/userModel.dart';
 import 'package:u_marked/reusable_widget/alertDialog.dart';
 import 'package:u_marked/screens/classList.dart';
+import 'package:u_marked/screens/profile/profilePage.dart';
 import '../../reusable_widget/gradientBackground.dart';
 
 class homePage extends StatefulWidget {
@@ -94,23 +95,24 @@ class _homePageState extends State<homePage> {
                         ),
                       ),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            IconButton(onPressed: (){
-                              // FirebaseAuth.instance.signOut();
-                              Alerts().logoutAlertDialog(context);
-                            },
-                              icon: Icon(Icons.logout,size: 40,),
-                              color: Colors.white,
-                            ),
-                            const Text('Logout',style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                          ],
+                        child: Center(
+                          child: IconButton(onPressed: (){
+                            // FirebaseAuth.instance.signOut();
+                            // Alerts().logoutAlertDialog(context);
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const ProfilePage(),
+                              ),
+                            );
+                          },
+                            icon: Icon(Icons.account_circle,size: 60,),
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10,),
+                  const SizedBox(height: 20),
                   Row(
                     children: [
                       Flexible(

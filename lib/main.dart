@@ -25,34 +25,39 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-          statusBarColor: Color(0xFF066cff),
-          statusBarIconBrightness: Brightness.light,
-          systemNavigationBarColor: Color(0xFF066cff),
-          systemNavigationBarIconBrightness: Brightness.light
-      ),
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: StreamBuilder(
-          stream: FirebaseAuth.instance.authStateChanges(),
-          builder: (ctx, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return CircularProgressIndicator(); // Example loading indicator.
-            }
-            if (snapshot.hasData && snapshot.data != null) {
-              return FutureBuilder(
-                future: _handleAuthState(snapshot.data!),
-                builder: (BuildContext context, AsyncSnapshot<Widget> snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return LinearProgressIndicator();
-                  }
-                  return snapshot.data ?? loginPage();
-                },
-              );
-            }
-            return loginPage();
-          },
+    return WillPopScope(
+      onWillPop: () async {
+        return false; // Return false to prevent popping the page
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+            statusBarColor: Color(0xFF066cff),
+            statusBarIconBrightness: Brightness.light,
+            systemNavigationBarColor: Color(0xFF066cff),
+            systemNavigationBarIconBrightness: Brightness.light
+        ),
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: StreamBuilder(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: (ctx, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return CircularProgressIndicator(); // Example loading indicator.
+              }
+              if (snapshot.hasData && snapshot.data != null) {
+                return FutureBuilder(
+                  future: _handleAuthState(snapshot.data!),
+                  builder: (BuildContext context, AsyncSnapshot<Widget> snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return LinearProgressIndicator();
+                    }
+                    return snapshot.data ?? loginPage();
+                  },
+                );
+              }
+              return loginPage();
+            },
+          ),
         ),
       ),
     );
