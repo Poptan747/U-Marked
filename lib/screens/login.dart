@@ -18,6 +18,7 @@ class _loginPageState extends State<loginPage> {
   final _form = GlobalKey<FormState>();
   var _enteredEmail;
   var _enteredPassword;
+  String _errorMessage = '';
 
   void _submit() async{
     final isValid = _form.currentState!.validate();
@@ -27,6 +28,7 @@ class _loginPageState extends State<loginPage> {
     _form.currentState!.save();
 
     try{
+      _errorMessage = '';
       bool canLogin = false;
       CollectionReference colRef = FirebaseFirestore.instance.collection('users');
 
@@ -37,10 +39,12 @@ class _loginPageState extends State<loginPage> {
         // Check if the user can log in (no existing sessions)
         canLogin = await checkExistingSessions(userSnapShot.docs.first.id);
       }else{
+        _errorMessage = 'User not found\n'
+            'Please check your email and password again.';
         canLogin = false;
       }
 
-      if (await canLogin) {
+      if (canLogin) {
         var _userCredentials = await _firebase.signInWithEmailAndPassword(
             email: _enteredEmail, password: _enteredPassword
         );
@@ -62,8 +66,8 @@ class _loginPageState extends State<loginPage> {
       } else {
         // Deny the login attempt
         
-        var snackBar = const SnackBar(
-          content: Text('User already logged in from another device'),
+        var snackBar = SnackBar(
+          content: Text(_errorMessage.trim().isEmpty ? 'User already logged in from another device' : _errorMessage),
           behavior: SnackBarBehavior.floating,
         );
         ScaffoldMessenger.of(context).showSnackBar(snackBar);
@@ -84,9 +88,8 @@ class _loginPageState extends State<loginPage> {
     // Query the sessions collection for the user
     QuerySnapshot userSessions = await sessions.where('userId', isEqualTo: userId).get();
 
-    // If there are no existing sessions, allow the login
+    // If there are existing sessions, decline the login
     if(userSessions.docs.isNotEmpty){
-      FirebaseAuth.instance.signOut();
       return false;
     }
     return userSessions.docs.isEmpty;

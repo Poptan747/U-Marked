@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -35,10 +36,19 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   loadData() async{
+    try {
+      var tokenResponse = await FirebaseAppCheck.instance.getToken();
+      print('Integrity Token: ${tokenResponse}');
+    } catch (e) {
+      print('Error getting Integrity Token: $e');
+    }
     var user = FirebaseAuth.instance.currentUser!;
     if(user.phoneNumber == null || user.phoneNumber!.isEmpty){
       _isPhoneVerify = false;
+    }else{
+      _isPhoneVerify = true;
     }
+
     var userCollection = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
     var data = await userCollection.data() as Map<String, dynamic>;
 
@@ -57,7 +67,7 @@ class _ProfilePageState extends State<ProfilePage> {
       _batch = userDetailmap['batch'];
       _lecturerID = userDetailmap['lecturerID'];
       _email = data['email'];
-      _phoneNum = data['phoneNum'];
+      _phoneNum = user.phoneNumber.toString();
       _imageUrl = data['imagePath'];
       _isEmailVerify = user.emailVerified;
     });
@@ -66,6 +76,11 @@ class _ProfilePageState extends State<ProfilePage> {
   void sendEmailVerify() async{
     User? user = FirebaseAuth.instance.currentUser;
     await user?.sendEmailVerification();
+  }
+
+  void sendPhoneVerify() async{
+    User? user = FirebaseAuth.instance.currentUser;
+
   }
 
   @override
@@ -78,34 +93,42 @@ class _ProfilePageState extends State<ProfilePage> {
             Expanded(
               child: Container(
                 color: Colors.blue.shade900,
-                child: Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: CircleAvatar(
-                        radius: 50,
-                        backgroundImage: NetworkImage(_imageUrl)
-                      ),
-                    ),
-                    Expanded(
-                      child: Padding(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 30),
+                  child: Row(
+                    children: [
+                      Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(_name,style: whiteTextStyle),
-                              Text(_isStudent? _studentID : _lecturerID,style: whiteTextStyle),
-                              Text(_batch,style: whiteTextStyle),
-                              Text(_email,style: whiteTextStyle),
-                              Text(_phoneNum,style: whiteTextStyle),
-                            ],
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundImage: NetworkImage(_imageUrl)
+                        ),
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Scrollbar(
+                            radius: Radius.circular(20),
+                            isAlwaysShown: true,
+                            scrollbarOrientation: ScrollbarOrientation.right,
+                            child: SingleChildScrollView(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(_name,style: whiteTextStyle),
+                                  Text(_isStudent? _studentID : _lecturerID,style: whiteTextStyle),
+                                  Text(_batch,style: whiteTextStyle),
+                                  Text(_email,style: whiteTextStyle),
+                                  Text(_phoneNum,style: whiteTextStyle),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -149,9 +172,11 @@ class _ProfilePageState extends State<ProfilePage> {
                             shape: GFButtonShape.pills,
                             type: GFButtonType.outline,
                             size: GFSize.LARGE,
-                            onPressed: (){
-
-                            },
+                            onPressed: !_isPhoneVerify?(){
+                              showDialog(context: context, builder: (BuildContext context) {
+                                return phoneVerificationDialog();
+                              });
+                            } : null,
                           ),
                         ),
                         GFButton(

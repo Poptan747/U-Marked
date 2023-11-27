@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "295414608301",
+    "firebase_url": "https://u-marked-default-rtdb.asia-southeast1.firebasedatabase.app",
     "project_id": "u-marked",
     "storage_bucket": "u-marked.appspot.com"
   },
@@ -14,7 +15,15 @@
       },
       "oauth_client": [
         {
-          "client_id": "295414608301-jik010mpgunqt5ho8svf19pvnuvqa458.apps.googleusercontent.com",
+          "client_id": "295414608301-a3qmm1npa1ik80isuh748h4djicccese.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.u_marked",
+            "certificate_hash": "94687d0df6d0ac21de6dd3caeff7e6052666c798"
+          }
+        },
+        {
+          "client_id": "295414608301-uofpma9bor0kkdd5gk5a67lcnsbti6fa.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
