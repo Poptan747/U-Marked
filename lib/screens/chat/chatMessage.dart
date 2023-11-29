@@ -16,13 +16,13 @@ class chatMessages extends StatelessWidget {
               .orderBy('createAt',descending: true).snapshots(),
       builder: (ctx , chatSnapshot){
         if(chatSnapshot.connectionState == ConnectionState.waiting){
-          return Center(child: Text('Loading....',style: TextStyle(color: Colors.black),));
+          return const Center(child: CircularProgressIndicator());
         }
         if(!chatSnapshot.hasData || chatSnapshot.data!.docs.isEmpty){
-          return Center(child: Text('No message found...'),);
+          return const Center(child: Text('No message found...'),);
         }
         if(chatSnapshot.hasError){
-          return Center(child: Text('Error...'),);
+          return const Center(child: Text('Error...'),);
         }
 
         var loadedMessages = chatSnapshot.data!.docs;
@@ -44,7 +44,8 @@ class chatMessages extends StatelessWidget {
                 return MessageBubble.next(message: chatMessage['message'], isMe: authUser.uid == currentMessageUID);
               }else{
                 return MessageBubble.first(
-                    userImage: 'https://picsum.photos/250', username: chatMessage['userName'],
+                    userImage: chatMessage['userImage'] ?? '',
+                    username: chatMessage['userName'],
                     message: chatMessage['message'], isMe: authUser.uid == currentMessageUID
                 );
               }

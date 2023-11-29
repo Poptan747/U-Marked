@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:getwidget/components/button/gf_button.dart';
 import 'package:getwidget/getwidget.dart';
+import 'package:table_calendar/table_calendar.dart';
+import 'package:u_marked/reusable_widget/appBar.dart';
 import 'package:u_marked/reusable_widget/bottomSheet.dart';
 import 'package:u_marked/reusable_widget/markedBottomSheet.dart';
 
@@ -139,22 +141,36 @@ class _attendanceWidgetState extends State<attendanceWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Opacity(
-          opacity: widget.isStudent? 0:1,
-          child: GFButton(
-              shape: GFButtonShape.pills,
-              elevation: 2,
-              size: GFSize.LARGE,
-              child: Text('Collect Attendance'),
-              onPressed: (){
-                widget.isStudent? null:_showBottomSheet(context,widget.classID);
-              }),
+    return Scaffold(
+      appBar: AttendanceAppBar,
+      body: SafeArea(
+        child: Container(
+          height: MediaQuery.of(context).size.height,
+          color: Colors.blue.shade100,
+          child: Column(
+            children: [
+              TableCalendar(
+                firstDay: DateTime.utc(2010, 10, 16),
+                lastDay: DateTime.utc(2030, 3, 14),
+                focusedDay: DateTime.now(),
+              ),
+              Opacity(
+                opacity: widget.isStudent? 0:1,
+                child: GFButton(
+                    shape: GFButtonShape.pills,
+                    elevation: 2,
+                    size: GFSize.LARGE,
+                    child: Text('Collect Attendance'),
+                    onPressed: (){
+                      widget.isStudent? null:_showBottomSheet(context,widget.classID);
+                    }),
+              ),
+              _isLoading? const Center(child: CircularProgressIndicator(color: Colors.white,)) :
+              _noData? Center(child: showEmptyClass) : _buildAttendanceListStream()
+            ],
+          ),
         ),
-        _isLoading? Center(child: CircularProgressIndicator(color: Colors.white,)) :
-        _noData? Center(child: showEmptyClass) : _buildAttendanceListStream()
-      ],
+      ),
     );
   }
 }

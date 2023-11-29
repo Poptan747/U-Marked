@@ -14,6 +14,7 @@ class inboxPage extends StatefulWidget {
 }
 
 var _userNameMap = <String, String>{};
+var _userImageUrlMap = <String, String>{};
 var _latestMsgMap = <String, String>{};
 var _latestMsgTimeMap = <String, String>{};
 var _isStudent = true;
@@ -38,6 +39,7 @@ class _inboxPageState extends State<inboxPage> {
   defaultData(){
     setState(() {
       _userNameMap = <String, String>{};
+      _userImageUrlMap = <String, String>{};
       _latestMsgMap = <String, String>{};
       _latestMsgTimeMap = <String, String>{};
       _isStudent = true;
@@ -119,6 +121,7 @@ class _inboxPageState extends State<inboxPage> {
             var getUserName = await getUserNameCollection.data() as Map<String, dynamic>;
             setState(() {
               _userNameMap[chatroomID] = getUserName['name'];
+              _userImageUrlMap[chatroomID] = user1Data['imagePath'];
               passUser2ID[chatroomID] = user1;
             });
           }else if(user.uid != user2){
@@ -129,10 +132,15 @@ class _inboxPageState extends State<inboxPage> {
             var getUserName = await getUserNameCollection.data() as Map<String, dynamic>;
             setState(() {
               _userNameMap[chatroomID] = getUserName['name'];
+              _userImageUrlMap[chatroomID] = user2Data['imagePath'];
               passUser2ID[chatroomID] = user2;
             });
           }
-
+          if(_userImageUrlMap[chatroomID]!.isEmpty){
+            setState(() {
+              _userImageUrlMap[chatroomID] = '';
+            });
+          }
           loadInboxData(chatroomID);
         }else{
           setState(() {
@@ -141,6 +149,9 @@ class _inboxPageState extends State<inboxPage> {
           });
         }
       }
+      setState(() {
+        _isLoading = false;
+      });
     }else{
       setState(() {
         _isLoading = false;
@@ -167,11 +178,12 @@ class _inboxPageState extends State<inboxPage> {
 
         _latestMsgTimeMap[chatroomID] = timeFormatted;
 
-        _isLoading = false;
         print('thru here again');
       });
     } else {
-      _isLoading = false;
+      setState(() {
+        _isLoading = false;
+      });
       print('chatroom data not found');
     }
   }
@@ -205,7 +217,7 @@ Widget _buildClassListStream() {
     builder: (context, orderSnapshot) {
       // print(orderSnapshot.data!.docs.length);
       if (orderSnapshot.connectionState == ConnectionState.waiting) {
-        return Center(child: Text('Loading....',style: TextStyle(color: Colors.white),));
+        return const Center(child: CircularProgressIndicator());
       }
 
       if(orderSnapshot.hasError){
@@ -217,10 +229,17 @@ Widget _buildClassListStream() {
         itemBuilder: (context, index) {
           var orderData = orderSnapshot.data!.docs[index].data() as Map<String, dynamic>;
           var chatroomID = orderData['chatroomID'];
+          var URL = _userImageUrlMap[chatroomID];
           return GFListTile(
             padding: EdgeInsets.all(20),
-            avatar:GFAvatar(
-              backgroundImage: NetworkImage('https://picsum.photos/250'),
+            avatar:URL != null?
+            GFAvatar(
+              backgroundImage: NetworkImage(URL),
+              size: GFSize.LARGE,
+              shape: GFAvatarShape.standard,
+            ):
+            const GFAvatar(
+              backgroundImage: AssetImage('images/user/default_user.jpg'),
               size: GFSize.LARGE,
               shape: GFAvatarShape.standard,
             ),
@@ -229,7 +248,6 @@ Widget _buildClassListStream() {
             color: Colors.white,
             icon: const Icon(Icons.keyboard_double_arrow_right),
             onTap: (){
-              print('tapped');
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => chatroom(userID1: _uID, userID2: passUser2ID[chatroomID].toString()),

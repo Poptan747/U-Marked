@@ -123,9 +123,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                 children: [
                                   Text(_name,style: whiteTextStyle),
                                   Text(_isStudent? _studentID : _lecturerID,style: whiteTextStyle),
-                                  Text(_batch,style: whiteTextStyle),
+                                  _batch.trim().isNotEmpty ? Text(_batch,style: whiteTextStyle) : const SizedBox(),
                                   Text(_email,style: whiteTextStyle),
-                                  Text(_phoneNum,style: whiteTextStyle),
+                                  _phoneNum==null?Text(_phoneNum,style: whiteTextStyle) : const SizedBox(),
                                 ],
                               ),
                             ),

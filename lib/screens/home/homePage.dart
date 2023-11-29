@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
 import 'package:u_marked/models/userModel.dart';
 import 'package:u_marked/reusable_widget/alertDialog.dart';
-import 'package:u_marked/screens/classList.dart';
+import 'package:u_marked/screens/class/classList.dart';
 import 'package:u_marked/screens/profile/profilePage.dart';
 import '../../reusable_widget/gradientBackground.dart';
 
@@ -27,8 +27,8 @@ class _homePageState extends State<homePage> {
     final fcm = FirebaseMessaging.instance;
     await fcm.requestPermission();
     final token = await fcm.getToken();
-    print('TOKEN HERE');
-    print(token);
+    // print('TOKEN HERE');
+    // print(token);
   }
 
   @override
@@ -40,8 +40,6 @@ class _homePageState extends State<homePage> {
 
   loadData() async{
     var user = FirebaseAuth.instance.currentUser!;
-    print("TEST USER EMAIL VERIFY");
-    print(user.emailVerified);
     var userCollection = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
     var data = await userCollection.data() as Map<String, dynamic>;
 
@@ -89,7 +87,7 @@ class _homePageState extends State<homePage> {
                             children: [
                               Text('Hello, $_name', style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.bold,)),
                               Text(_isStudent? _studentID! : _lecturerID,style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                              Text(_batch!,style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                              _batch.trim().isNotEmpty ? Text(_batch!,style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)) : SizedBox(),
                             ],
                           ),
                         ),

@@ -6,7 +6,7 @@ import 'package:u_marked/screens/admin/adminHome.dart';
 import 'package:u_marked/screens/home/homePage.dart';
 import 'package:u_marked/screens/home/inbox.dart';
 import 'package:u_marked/screens/home/settings.dart';
-import '../myClass.dart';
+import '../class/myClass.dart';
 
 
 class home extends StatefulWidget {

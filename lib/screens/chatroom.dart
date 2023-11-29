@@ -65,7 +65,7 @@ class _chatroomState extends State<chatroom> {
             children: [
               Expanded(child: chatMessages(chatroomID: chatRoomID,)),
               newMessage(chatRoomID: chatRoomID),
-              SizedBox(height: 10,)
+              const SizedBox(height: 10)
             ],
           ),
         ),

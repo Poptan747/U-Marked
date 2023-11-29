@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:getwidget/getwidget.dart';
 import 'package:u_marked/reusable_widget/appBar.dart';
 import 'package:u_marked/reusable_widget/gradientBackground.dart';
-import 'package:u_marked/screens/classDetail.dart';
+import 'package:u_marked/screens/class/classDetail.dart';
 
 class myClassList extends StatefulWidget {
 
@@ -139,7 +139,7 @@ class _myClassListState extends State<myClassList> {
           _cardTitle[classID] = ('${_nameMap[classID]!}\n${_subjectIDMap[classID]!}${_subjectNameMap[classID]!}')!;
         }
         _isLoading = false;
-        print('thru here again');
+        // print('thru here again');
       });
     } else {
       _isLoading = false;
@@ -154,7 +154,7 @@ class _myClassListState extends State<myClassList> {
       builder: (context, orderSnapshot) {
         // print(orderSnapshot.data!.docs.length);
         if (orderSnapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: Text('Loading....',style: TextStyle(color: Colors.white),));
+          return const Center(child: CircularProgressIndicator(),);
         }
 
         if(orderSnapshot.hasError){
@@ -167,18 +167,16 @@ class _myClassListState extends State<myClassList> {
             var orderData = orderSnapshot.data!.docs[index].data() as Map<String, dynamic>;
             var classID = orderData['classID'];
             return GFListTile(
-              padding: EdgeInsets.all(20),
               avatar:GFAvatar(
                 backgroundImage: AssetImage('images/location/IEB.jpg'),
                 size: GFSize.LARGE,
                 shape: GFAvatarShape.standard,
               ),
               titleText: _cardTitle[classID],
-              subTitleText:'${_timeMap[classID] ?? "Loading EMPTY"} \nCreate at ${_dateMap[classID] ?? "..."}',
+              subTitleText:'${_timeMap[classID] ?? ""} \nCreate at ${_dateMap[classID] ?? "..."}',
               color: Colors.white,
               icon: const Icon(Icons.keyboard_double_arrow_right),
               onTap: (){
-                print('tapped');
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => classDetail(classID: classID, isStudent: _isStudent,),
@@ -199,7 +197,7 @@ class _myClassListState extends State<myClassList> {
       appBar: myClassAppBar,
       body: Container(
         decoration: homeBackgroundDecoration,
-        child: _isLoading? Center(child: CircularProgressIndicator(color: Colors.white,)) :
+        child: _isLoading? const Center(child: CircularProgressIndicator(color: Colors.white,)) :
           _noData? Center(child: showEmptyClass) : _buildClassListStream()
       ),
     );
@@ -219,7 +217,7 @@ StreamBuilder showClassList = StreamBuilder(
   stream: FirebaseFirestore.instance.collection(_isStudent? 'students' : 'lecturers').doc(_uID).collection('classes').snapshots(),
   builder: (context, orderSnapshot) {
     if (orderSnapshot.connectionState == ConnectionState.waiting) {
-      return Center(child: Text('Loading....',style: TextStyle(color: Colors.white),));
+      // return Center(child: Text('Loading....',style: TextStyle(color: Colors.white),));
     }
 
     if(orderSnapshot.hasError){

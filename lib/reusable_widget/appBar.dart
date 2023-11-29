@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
+import 'package:marquee/marquee.dart';
 import 'package:u_marked/reusable_widget/bottomSheet.dart';
-import 'package:u_marked/screens/memberList.dart';
+import 'package:u_marked/screens/class/memberList.dart';
 import 'gradientBackground.dart';
 
 GFAppBar myClassAppBar = GFAppBar(
@@ -24,7 +25,7 @@ GFAppBar myClassAppBar = GFAppBar(
   ],
 );
 
-GFAppBar classDetailsAppBar(String className,String lecturerID, String classID, BuildContext context){
+GFAppBar classDetailsAppBar(String className, BuildContext context){
   return GFAppBar(
     centerTitle: true,
     elevation: 0,
@@ -32,23 +33,7 @@ GFAppBar classDetailsAppBar(String className,String lecturerID, String classID, 
     flexibleSpace: Container(
       decoration: myClassAppBarBackgroundDecoration,
     ),
-    title: Text(className),
-    actions: [
-    GFIconButton(
-      icon: Icon(
-        Icons.people,
-        color: Colors.white,
-      ),
-      onPressed: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => memberList(classID: classID, lecturerID: lecturerID,),
-          ),
-        );
-      },
-      type: GFButtonType.transparent,
-    )
-    ],
+    title: SingleChildScrollView(scrollDirection:Axis.horizontal, child: Text(className)),
   );
 }
 
@@ -60,6 +45,16 @@ GFAppBar memberListAppBar = GFAppBar(
     decoration: myClassAppBarBackgroundDecoration,
   ),
   title: Text("Member List"),
+);
+
+GFAppBar AttendanceAppBar = GFAppBar(
+  centerTitle: true,
+  elevation: 0,
+  // automaticallyImplyLeading: false,
+  flexibleSpace: Container(
+    decoration: myClassAppBarBackgroundDecoration,
+  ),
+  title: Text("Attendance"),
 );
 
 GFAppBar chatroomAppBar(String userName) {
