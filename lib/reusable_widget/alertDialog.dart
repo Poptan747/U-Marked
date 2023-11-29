@@ -389,7 +389,15 @@ class _verifyOTPDialogState extends State<verifyOTPDialog> {
       User? currentUser = FirebaseAuth.instance.currentUser;
 
       // Link the phone number credential with the current user
-      await currentUser?.linkWithCredential(credential);
+      await currentUser?.linkWithCredential(credential).then((value) {
+        FirebaseFirestore.instance.collection('users').doc(currentUser.uid).update({
+          'isPhoneVerified' : true
+        }).catchError((error) {
+          print(error);
+        });
+      });
+      Navigator.pop(context);
+      currentUser!.reload();
 
       var snackBar = const SnackBar(
         content: Text('Phone number linked successfully.'),

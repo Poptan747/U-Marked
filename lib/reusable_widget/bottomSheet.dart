@@ -287,6 +287,7 @@ class _createStudentBottomSheetState extends State<createStudentBottomSheet> {
   final _createStudentForm = GlobalKey<FormState>();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _enteredEmailController = TextEditingController();
+  final TextEditingController _enteredPhoneController = TextEditingController();
   final TextEditingController _enteredNameController = TextEditingController();
   final TextEditingController _enteredStudentIDController = TextEditingController();
   final TextEditingController _enteredBatchController = TextEditingController();
@@ -298,6 +299,7 @@ class _createStudentBottomSheetState extends State<createStudentBottomSheet> {
   void dispose() {
     _passwordController.dispose();
     _enteredEmailController.dispose();
+    _enteredPhoneController.dispose();
     _enteredStudentIDController.dispose();
     _enteredBatchController.dispose();
     _enteredNameController.dispose();
@@ -335,18 +337,20 @@ class _createStudentBottomSheetState extends State<createStudentBottomSheet> {
           'password' : _passwordController.text,
           'userType' : 1, //student 1 , lec, 2 , admin 3
           'createAt' : DateTime.now(),
-          'phoneNum' : '',
+          'phoneNum' : _enteredPhoneController.text,
+          'isEmailVerified' : false,
+          'isPhoneVerified' : false,
         }).then((value) async {
           if(_pickedImageFile !=null){
+            final metadata = SettableMetadata(contentType: "image/jpeg");
             final storageRef = FirebaseStorage.instance.ref().child('user_images').child('${user.uid}.jpg');
-            await storageRef.putFile(_pickedImageFile!);
+            await storageRef.putFile(_pickedImageFile!,metadata);
             FirebaseFirestore.instance.collection('users').doc(user.uid).update({
               'imagePath' :  await storageRef.getDownloadURL(),
             });
           }else{
-            final storageRef = FirebaseStorage.instance.ref().child('user_images').child('default_user.jpg');
             FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-              'imagePath' :  await storageRef.getDownloadURL(),
+              'imagePath' :  ''
             });
           }
         }).catchError((error) {
@@ -443,7 +447,7 @@ class _createStudentBottomSheetState extends State<createStudentBottomSheet> {
                   decoration: const InputDecoration(labelText: 'Student ID',icon:Icon(Icons.badge)),
                   validator: (value){
                     if(value == null || value.trim().isEmpty || value.trim().length > 50){
-                      return 'Please enter a valid student ID !';
+                      return 'Please enter a valid student ID';
                     }
                   },
                   onSaved: (value){
@@ -456,7 +460,7 @@ class _createStudentBottomSheetState extends State<createStudentBottomSheet> {
                   decoration: const InputDecoration(labelText: 'Batch',icon:Icon(Icons.groups_2)),
                   validator: (value){
                     if(value == null || value.trim().isEmpty){
-                      return 'Please enter a valid batch !';
+                      return 'Please enter a valid batch';
                     }
                   },
                   onSaved: (value){
@@ -469,7 +473,7 @@ class _createStudentBottomSheetState extends State<createStudentBottomSheet> {
                   decoration: const InputDecoration(labelText: 'Name',icon:Icon(Icons.person)),
                   validator: (value){
                     if(value == null || value.trim().isEmpty){
-                      return 'Please enter a valid name !';
+                      return 'Please enter a valid name';
                     }
                   },
                   onSaved: (value){
@@ -483,7 +487,7 @@ class _createStudentBottomSheetState extends State<createStudentBottomSheet> {
                   decoration: const InputDecoration(labelText: 'Email',icon:Icon(Icons.email)),
                   validator: (value){
                     if(value == null || value.trim().isEmpty || !value.contains('@')){
-                      return 'Please enter a valid email address !';
+                      return 'Please enter a valid email address';
                     }
                   },
                   onSaved: (value){
@@ -493,6 +497,26 @@ class _createStudentBottomSheetState extends State<createStudentBottomSheet> {
                 _errorMessage.trim().isNotEmpty ?
                 Text(_errorMessage, style: TextStyle(color: Colors.red),) :
                 const SizedBox(height: 10),
+                TextFormField(
+                  controller: _enteredPhoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(labelText: 'Phone Number',icon:Icon(Icons.phone), hintText: '+60123456789'),
+                  validator: (value){
+                    if(value == null || value.trim().isEmpty){
+                      return 'Please enter a valid phone number';
+                    }
+                    if(value.contains('-')||value.contains(' ')){
+                      return '"-" and empty spaces are not needed.';
+                    }
+                    if(!value.contains('+')){
+                      return 'Please enter the country code with "+".';
+                    }
+                  },
+                  onSaved: (value){
+                    _enteredPhoneController.text = value!;
+                  },
+                ),
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     Expanded(
@@ -501,7 +525,7 @@ class _createStudentBottomSheetState extends State<createStudentBottomSheet> {
                         decoration: const InputDecoration(labelText: 'Password',icon:Icon(Icons.password)),
                         validator: (value){
                           if(value == null || value.trim().isEmpty){
-                            return 'Please select a date';
+                            return 'Please enter a password';
                           }
                         },
                         onSaved: (value){
@@ -520,11 +544,22 @@ class _createStudentBottomSheetState extends State<createStudentBottomSheet> {
                   ],
                 ),
                 const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () {
-                    _submit();
-                  },
-                  child: const Text('Create Student Account'),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Back'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        _submit();
+                      },
+                      child: const Text('Create Student Account'),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -547,6 +582,7 @@ class _editStudentBottomSheetState extends State<editStudentBottomSheet> {
   final _editStudentForm = GlobalKey<FormState>();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _enteredEmailController = TextEditingController();
+  final TextEditingController _enteredPhoneController = TextEditingController();
   final TextEditingController _enteredNameController = TextEditingController();
   final TextEditingController _enteredStudentIDController = TextEditingController();
   final TextEditingController _enteredBatchController = TextEditingController();
@@ -555,11 +591,14 @@ class _editStudentBottomSheetState extends State<editStudentBottomSheet> {
   String imageUrl ='';
   bool changeImage = false;
   bool isLoading = false;
+  bool _isEmailVerify = false;
+  bool _isPhoneVerify = false;
 
   @override
   void dispose() {
     _passwordController.dispose();
     _enteredEmailController.dispose();
+    _enteredPhoneController.dispose();
     _enteredStudentIDController.dispose();
     _enteredBatchController.dispose();
     _enteredNameController.dispose();
@@ -570,25 +609,38 @@ class _editStudentBottomSheetState extends State<editStudentBottomSheet> {
   void initState() {
     super.initState();
     loadData();
-    print(widget.uid);
   }
 
   loadData() async{
-    String uid = widget.uid;
-    var userCollection = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-    var data = await userCollection.data() as Map<String, dynamic>;
+    try {
+      String uid = widget.uid;
+      var userCollection = await FirebaseFirestore.instance.collection('users')
+          .doc(uid)
+          .get();
+      var data = await userCollection.data() as Map<String, dynamic>;
 
-    UserDetail newUser = UserDetail(uid: uid, email: data['email'], userType: data['userType']);
-    Map<String, dynamic> userDetailmap = await newUser.getUserDetail();
+      UserDetail newUser = UserDetail(
+          uid: uid, email: data['email'], userType: data['userType']);
+      Map<String, dynamic> userDetailmap = await newUser.getUserDetail();
 
-    setState(() {
-      _enteredNameController.text = userDetailmap['name'];
-      _enteredStudentIDController.text = userDetailmap['studentID'];
-      _enteredBatchController.text = userDetailmap['batch'];
-      _enteredEmailController.text = data['email'];
-      _passwordController.text = data['password'];
-      imageUrl = data['imagePath'];
-    });
+      setState(() {
+        if (data['isEmailVerified']) {
+          _isEmailVerify = true;
+        }
+        if (data['isPhoneVerified']) {
+          _isPhoneVerify = true;
+        }
+        _enteredNameController.text = userDetailmap['name'];
+        _enteredStudentIDController.text = userDetailmap['studentID'];
+        _enteredBatchController.text = userDetailmap['batch'];
+        _enteredEmailController.text = data['email'];
+        _enteredPhoneController.text = data['phoneNum'];
+        _passwordController.text = data['password'];
+        imageUrl = data['imagePath'];
+      });
+    } on FirebaseException catch(e){
+      print(e.message);
+    }
   }
 
   _submit() async{
@@ -645,12 +697,15 @@ class _editStudentBottomSheetState extends State<editStudentBottomSheet> {
 
         if(changeImage){
           final storageRef = FirebaseStorage.instance.ref().child('user_images').child('${widget.uid}.jpg');
-          await storageRef.delete();
+          if(imageUrl.trim().isNotEmpty){
+            await storageRef.delete();
+          }
           await storageRef.putFile(_pickedImageFile!);
 
           FirebaseFirestore.instance.collection('users').doc(widget.uid).update({
             'email' : _enteredEmailController.text,
             'password' : _passwordController.text,
+            'phoneNum' : _enteredPhoneController.text,
             'imagePath' :  await storageRef.getDownloadURL(),
           }).catchError((error) {
             print(error);
@@ -659,6 +714,7 @@ class _editStudentBottomSheetState extends State<editStudentBottomSheet> {
           FirebaseFirestore.instance.collection('users').doc(widget.uid).update({
             'email' : _enteredEmailController.text,
             'password' : _passwordController.text,
+            'phoneNum' : _enteredPhoneController.text,
           }).catchError((error) {
             print(error);
           });
@@ -738,8 +794,13 @@ class _editStudentBottomSheetState extends State<editStudentBottomSheet> {
                   foregroundImage: _pickedImageFile!=null? FileImage(_pickedImageFile!) : null,
                   radius: 50,
                 ) :
+                imageUrl.trim().isNotEmpty?
                 CircleAvatar(
-                  foregroundImage: imageUrl.trim().isNotEmpty? NetworkImage(imageUrl) : null,
+                  foregroundImage: NetworkImage(imageUrl),
+                  radius: 50,
+                ) :
+                const CircleAvatar(
+                  foregroundImage: AssetImage('images/user/default_user.jpg'),
                   radius: 50,
                 ),
                 TextButton.icon(
@@ -748,7 +809,33 @@ class _editStudentBottomSheetState extends State<editStudentBottomSheet> {
                   label: const Text('Add profile picture'),
                 ),
                 const SizedBox(height: 10),
-                isLoading? const CircularProgressIndicator() : const SizedBox(height: 1),
+                isLoading? const CircularProgressIndicator() : const SizedBox(),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    GFButton(
+                      onPressed: null,
+                      color: Colors.black,
+                      type: GFButtonType.outline2x,
+                      icon: _isEmailVerify? const Icon(Icons.check,color: Colors.green,) :
+                      const Icon(Icons.error,color: Colors.red,),
+                      text: "Email Verification",
+                      size: GFSize.LARGE,
+                      shape: GFButtonShape.pills,
+                    ),
+                    GFButton(
+                      onPressed: null,
+                      color: Colors.black,
+                      type: GFButtonType.outline2x,
+                      icon: _isPhoneVerify ? const Icon(Icons.check,color: Colors.green,) :
+                      const Icon(Icons.error,color: Colors.red,),
+                      text: "Phone Number Verification",
+                      size: GFSize.LARGE,
+                      shape: GFButtonShape.pills,
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _enteredStudentIDController,
@@ -792,6 +879,7 @@ class _editStudentBottomSheetState extends State<editStudentBottomSheet> {
                 TextFormField(
                   controller: _enteredEmailController,
                   keyboardType: TextInputType.emailAddress,
+                  readOnly: _isEmailVerify? true : false,
                   decoration: const InputDecoration(labelText: 'Email',icon:Icon(Icons.email)),
                   validator: (value){
                     if(value == null || value.trim().isEmpty || !value.contains('@')){
@@ -804,6 +892,27 @@ class _editStudentBottomSheetState extends State<editStudentBottomSheet> {
                 ),
                 _errorMessage.trim().isNotEmpty ?
                 Text(_errorMessage, style: TextStyle(color: Colors.red),) :
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _enteredPhoneController,
+                  keyboardType: TextInputType.phone,
+                  readOnly: _isPhoneVerify? true : false,
+                  decoration: const InputDecoration(labelText: 'Phone Number',icon:Icon(Icons.phone), hintText: '+60123456789'),
+                  validator: (value){
+                    if(value == null || value.trim().isEmpty){
+                      return 'Please enter a valid phone number';
+                    }
+                    if(value.contains('-')||value.contains(' ')){
+                      return '"-" and empty spaces are not needed.';
+                    }
+                    if(!value.contains('+')){
+                      return 'Please enter the country code with "+".';
+                    }
+                  },
+                  onSaved: (value){
+                    _enteredPhoneController.text = value!;
+                  },
+                ),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -832,11 +941,22 @@ class _editStudentBottomSheetState extends State<editStudentBottomSheet> {
                   ],
                 ),
                 const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () {
-                    _submit();
-                  },
-                  child: const Text('Confirm'),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Back'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        _submit();
+                      },
+                      child: const Text('Confirm'),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -859,6 +979,7 @@ class _createLecturerBottomSheetState extends State<createLecturerBottomSheet> {
   final _createLecturerForm = GlobalKey<FormState>();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _enteredEmailController = TextEditingController();
+  final TextEditingController _enteredPhoneController = TextEditingController();
   final TextEditingController _enteredNameController = TextEditingController();
   final TextEditingController _enteredLecturerIDController = TextEditingController();
   String _errorMessage = '';
@@ -868,6 +989,7 @@ class _createLecturerBottomSheetState extends State<createLecturerBottomSheet> {
   void dispose() {
     _passwordController.dispose();
     _enteredEmailController.dispose();
+    _enteredPhoneController.dispose();
     _enteredLecturerIDController.dispose();
     _enteredNameController.dispose();
     super.dispose();
@@ -901,7 +1023,9 @@ class _createLecturerBottomSheetState extends State<createLecturerBottomSheet> {
           'password' : _passwordController.text,
           'userType' : 2, //student 1 , lec, 2 , admin 3
           'createAt' : DateTime.now(),
-          'phoneNum' : '',
+          'phoneNum' : _enteredPhoneController.text,
+          'isEmailVerified' : false,
+          'isPhoneVerified' : false,
         }).then((value) async {
           if(_pickedImageFile !=null){
             final storageRef = FirebaseStorage.instance.ref().child('user_images').child('${user.uid}.jpg');
@@ -910,9 +1034,8 @@ class _createLecturerBottomSheetState extends State<createLecturerBottomSheet> {
               'imagePath' :  await storageRef.getDownloadURL(),
             });
           }else{
-            final storageRef = FirebaseStorage.instance.ref().child('user_images').child('default_user.jpg');
             FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-              'imagePath' :  await storageRef.getDownloadURL(),
+              'imagePath' :  '',
             });
           }
         }).catchError((error) {
@@ -1037,7 +1160,24 @@ class _createLecturerBottomSheetState extends State<createLecturerBottomSheet> {
                   },
                 ),
                 _errorMessage.trim().isNotEmpty ?
-                Text(_errorMessage, style: TextStyle(color: Colors.red),) :
+                Text(_errorMessage, style: const TextStyle(color: Colors.red),) :
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _enteredPhoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(labelText: 'Phone Number',icon:Icon(Icons.phone), hintText: '+60123456789'),
+                  validator: (value){
+                    if(value == null || value.trim().isEmpty){
+                      return 'Please enter a valid phone number';
+                    }
+                    if(value.contains('-')||value.contains(' ')){
+                      return '"-" and empty spaces are not needed.';
+                    }
+                  },
+                  onSaved: (value){
+                    _enteredPhoneController.text = value!;
+                  },
+                ),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -1066,11 +1206,22 @@ class _createLecturerBottomSheetState extends State<createLecturerBottomSheet> {
                   ],
                 ),
                 const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () {
-                    _submit();
-                  },
-                  child: const Text('Create Lecturer Account'),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Back'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        _submit();
+                      },
+                      child: const Text('Create Lecturer Account'),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1093,18 +1244,20 @@ class _editLecturerBottomSheet extends State<editLecturerBottomSheet> {
   final _editLecturerForm = GlobalKey<FormState>();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _enteredEmailController = TextEditingController();
+  final TextEditingController _enteredPhoneController = TextEditingController();
   final TextEditingController _enteredNameController = TextEditingController();
   final TextEditingController _enteredLecturerIDController = TextEditingController();
   String _errorMessage = '';
   String imageUrl = '';
   bool changeImage = false;
   File? _pickedImageFile;
-  bool isLoading = false;
+  bool isLoading = false; bool _isEmailVerify = false; bool _isPhoneVerify = false;
 
   @override
   void dispose() {
     _passwordController.dispose();
     _enteredEmailController.dispose();
+    _enteredPhoneController.dispose();
     _enteredLecturerIDController.dispose();
     _enteredNameController.dispose();
     super.dispose();
@@ -1125,9 +1278,16 @@ class _editLecturerBottomSheet extends State<editLecturerBottomSheet> {
     Map<String, dynamic> userDetailmap = await newUser.getUserDetail();
 
     setState(() {
+      if (data['isEmailVerified']) {
+        _isEmailVerify = true;
+      }
+      if (data['isPhoneVerified']) {
+        _isPhoneVerify = true;
+      }
       _enteredNameController.text = userDetailmap['name'];
       _enteredLecturerIDController.text = userDetailmap['lecturerID'];
       _enteredEmailController.text = data['email'];
+      _enteredPhoneController.text = data['phoneNum'];
       _passwordController.text = data['password'];
       imageUrl = data['imagePath'];
     });
@@ -1187,12 +1347,15 @@ class _editLecturerBottomSheet extends State<editLecturerBottomSheet> {
 
         if(changeImage){
           final storageRef = FirebaseStorage.instance.ref().child('user_images').child('${widget.uid}.jpg');
-          await storageRef.delete();
+          if(imageUrl.trim().isNotEmpty){
+            await storageRef.delete();
+          }
           await storageRef.putFile(_pickedImageFile!);
 
           FirebaseFirestore.instance.collection('users').doc(widget.uid).update({
             'email' : newEmail,
             'password' : _passwordController.text,
+            'phoneNum' : _enteredPhoneController.text,
             'imagePath' : await storageRef.getDownloadURL(),
           }).catchError((error) {
             print(error);
@@ -1201,6 +1364,7 @@ class _editLecturerBottomSheet extends State<editLecturerBottomSheet> {
           FirebaseFirestore.instance.collection('users').doc(widget.uid).update({
             'email' : newEmail,
             'password' : _passwordController.text,
+            'phoneNum' : _enteredPhoneController.text,
           }).catchError((error) {
             print(error);
           });
@@ -1280,17 +1444,47 @@ class _editLecturerBottomSheet extends State<editLecturerBottomSheet> {
                   foregroundImage: _pickedImageFile!=null? FileImage(_pickedImageFile!) : null,
                   radius: 50,
                 ) :
+                    imageUrl.trim().isNotEmpty?
                 CircleAvatar(
-                  foregroundImage: imageUrl.trim().isNotEmpty? NetworkImage(imageUrl) : null,
+                  foregroundImage: NetworkImage(imageUrl),
                   radius: 50,
-                ),
+                ) :
+                    const CircleAvatar(
+                      foregroundImage: AssetImage('images/user/default_user.jpg'),
+                      radius: 50,
+                    ),
                 TextButton.icon(
                   onPressed: _pickImage,
                   icon: const Icon(Icons.image),
                   label: const Text('Add profile picture'),
                 ),
                 const SizedBox(height: 10),
-                isLoading? const CircularProgressIndicator() : const SizedBox(height: 1),
+                isLoading? const CircularProgressIndicator() : const SizedBox(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    GFButton(
+                      onPressed: null,
+                      color: Colors.black,
+                      type: GFButtonType.outline2x,
+                      icon: _isEmailVerify? const Icon(Icons.check,color: Colors.green,) :
+                      const Icon(Icons.error,color: Colors.red,),
+                      text: "Email Verification",
+                      size: GFSize.LARGE,
+                      shape: GFButtonShape.pills,
+                    ),
+                    GFButton(
+                      onPressed: null,
+                      color: Colors.black,
+                      type: GFButtonType.outline2x,
+                      icon: _isPhoneVerify ? const Icon(Icons.check,color: Colors.green,) :
+                      const Icon(Icons.error,color: Colors.red,),
+                      text: "Phone Number Verification",
+                      size: GFSize.LARGE,
+                      shape: GFButtonShape.pills,
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _enteredLecturerIDController,
@@ -1320,6 +1514,7 @@ class _editLecturerBottomSheet extends State<editLecturerBottomSheet> {
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _enteredEmailController,
+                  readOnly: _isEmailVerify? true : false,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(labelText: 'Email',icon:Icon(Icons.email)),
                   validator: (value){
@@ -1333,6 +1528,27 @@ class _editLecturerBottomSheet extends State<editLecturerBottomSheet> {
                 ),
                 _errorMessage.trim().isNotEmpty ?
                 Text(_errorMessage, style: TextStyle(color: Colors.red),) :
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _enteredPhoneController,
+                  keyboardType: TextInputType.phone,
+                  readOnly: _isPhoneVerify? true : false,
+                  decoration: const InputDecoration(labelText: 'Phone Number',icon:Icon(Icons.phone), hintText: '+60123456789'),
+                  validator: (value){
+                    if(value == null || value.trim().isEmpty){
+                      return 'Please enter a valid phone number';
+                    }
+                    if(value.contains('-')||value.contains(' ')){
+                      return '"-" and empty spaces are not needed.';
+                    }
+                    if(!value.contains('+')){
+                      return 'Please enter the country code with "+".';
+                    }
+                  },
+                  onSaved: (value){
+                    _enteredPhoneController.text = value!;
+                  },
+                ),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -1361,11 +1577,22 @@ class _editLecturerBottomSheet extends State<editLecturerBottomSheet> {
                   ],
                 ),
                 const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () {
-                    _submit();
-                  },
-                  child: const Text('Confirm'),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Back'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        _submit();
+                      },
+                      child: const Text('Confirm'),
+                    ),
+                  ],
                 ),
               ],
             ),

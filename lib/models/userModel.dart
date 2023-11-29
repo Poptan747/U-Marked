@@ -64,6 +64,7 @@ class UserDetail extends UserGet{
     }
 
   }
+  
 }
 
 class Admin {

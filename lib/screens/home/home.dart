@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:u_marked/models/userModel.dart';
@@ -20,6 +21,38 @@ class _homeState extends State<home> {
   @override
   void initState() {
     super.initState();
+    User user = FirebaseAuth.instance.currentUser!;
+    updateDataIfEmailVerified(user);
+  }
+
+  Future<void> updateDataIfEmailVerified(User user) async {
+    var userCollection = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    var data = await userCollection.data() as Map<String, dynamic>;
+
+    if(!data['userType'] == 3){
+      while (!user.emailVerified) {
+        await Future.delayed(const Duration(seconds: 5));
+        await user.reload();
+        user = FirebaseAuth.instance.currentUser!;
+
+        if (user.emailVerified) {
+          await updateFirestoreData(user);
+          print('Email verified. Updating Firestore data.');
+          break;
+        } else {
+          print('Email not verified. Waiting...');
+        }
+      }
+    }
+  }
+
+  Future<void> updateFirestoreData(User user) async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .update({
+      'isEmailVerified': true,
+    });
   }
 
   int _currentIndex = 0;
@@ -43,10 +76,6 @@ class _homeState extends State<home> {
             BottomNavigationBarItem(
               icon: Icon(Icons.inbox),
               label: 'Inbox',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
-              label: 'Settings',
             ),
           ],
           onTap: (int newIndex){

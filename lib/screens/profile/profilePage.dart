@@ -99,9 +99,14 @@ class _ProfilePageState extends State<ProfilePage> {
                     children: [
                       Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: CircleAvatar(
+                        child: _imageUrl.trim().isNotEmpty?
+                        CircleAvatar(
+                            radius: 50,
+                            backgroundImage: NetworkImage(_imageUrl)
+                        ):
+                        const CircleAvatar(
+                          foregroundImage: AssetImage('images/user/default_user.jpg'),
                           radius: 50,
-                          backgroundImage: NetworkImage(_imageUrl)
                         ),
                       ),
                       Expanded(
@@ -154,10 +159,8 @@ class _ProfilePageState extends State<ProfilePage> {
                             shape: GFButtonShape.pills,
                             type: GFButtonType.outline,
                             size: GFSize.LARGE,
-                            onPressed: (){
-                              if(!_isEmailVerify){
-                                sendEmailVerify();
-                              }
+                            onPressed: _isEmailVerify? null :(){
+                              sendEmailVerify();
                               Alerts().emailVerificationDialog(context, _isEmailVerify, _email);
                             },
                           ),

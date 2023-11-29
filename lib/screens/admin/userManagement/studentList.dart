@@ -29,6 +29,7 @@ class _studentListState extends State<studentList> {
             child: Column(
               children: [
                 TextField(
+                  autofocus: false,
                   decoration: const InputDecoration(
                     labelText: 'Search',
                     prefixIcon: Icon(Icons.search),
