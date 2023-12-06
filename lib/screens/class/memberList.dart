@@ -17,10 +17,9 @@ class memberList extends StatefulWidget {
 var _isLoading = true;
 var _noData = true;
 var _classID='';
-var _lecturerMap = <String, String>{};
 var _nameMap = <String, String>{};
-var _studentIDMap = <String, String>{};
-var _batchMap = <String, String>{};
+var _iDMap = <String, String>{};
+var totalMemberCount = 0;
 var _currentUser = FirebaseAuth.instance.currentUser!;
 
 class _memberListState extends State<memberList> {
@@ -37,24 +36,12 @@ class _memberListState extends State<memberList> {
     _isLoading = true;
     _noData = true;
     _classID='';
-    _lecturerMap = <String, String>{};
     _nameMap = <String, String>{};
-    _studentIDMap = <String, String>{};
-    _batchMap = <String, String>{};
+    _iDMap = <String, String>{};
   }
 
   loadData() async{
     _classID = widget.classID;
-    var lecturerCollection = await FirebaseFirestore.instance
-        .collection('lecturers')
-        .doc(widget.lecturerID)
-        .get();
-    var lecturerData = lecturerCollection.data() as Map<String, dynamic>;
-
-    setState(() {
-      _lecturerMap['name'] = lecturerData['name'];
-      _lecturerMap['id'] = lecturerData['lecturerID'];
-    });
 
     var memberCollection = await FirebaseFirestore.instance
         .collection('classes')
@@ -65,6 +52,7 @@ class _memberListState extends State<memberList> {
     for (var doc in memberCollection.docs) {
       if (!doc.data().isEmpty){
         setState(() {
+          totalMemberCount = memberCollection.docs.length;
           _noData = false;
         });
         var orderData = doc.data() as Map<String, dynamic>;
@@ -77,62 +65,53 @@ class _memberListState extends State<memberList> {
         });
       }
     }
-
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   loadUserData(String UID) async{
     var userCollection = await FirebaseFirestore.instance
-        .collection('students')
+        .collection('users')
         .doc(UID)
         .get();
+
     var orderData = userCollection.data() as Map<String, dynamic>;
 
-    setState(() {
-      _nameMap[UID] = orderData['name'];
-      _studentIDMap[UID] = orderData['studentID'];
-      _batchMap[UID] = orderData['batch'];
-      _isLoading = false;
-    });
-    // print(orderData);
+    if(orderData['userType'] == 1){
+      //student
+      var studentCollection = await FirebaseFirestore.instance
+          .collection('students')
+          .doc(UID)
+          .get();
+      var studentData = studentCollection.data() as Map<String, dynamic>;
+      setState(() {
+        _nameMap[UID] = studentData['name'];
+        _iDMap[UID] = studentData['studentID'];
+      });
+    }else if(orderData['userType'] ==2){
+      //lec
+      var lecturersCollection = await FirebaseFirestore.instance
+          .collection('lecturers')
+          .doc(UID)
+          .get();
+      var lecturerData = lecturersCollection.data() as Map<String, dynamic>;
+      setState(() {
+        _nameMap[UID] = lecturerData['name'];
+        _iDMap = lecturerData['lecturerID'];
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: memberListAppBar,
+      appBar: memberListAppBar(totalMemberCount),
       body: SafeArea(
         child: Container(
           height: MediaQuery.of(context).size.height,
           color: Colors.blue.shade100,
-          child: Column(
-            children: [
-              GFListTile(
-                padding: const EdgeInsets.all(20),
-                titleText: _lecturerMap['name'],
-                subTitleText:_lecturerMap['id'],
-                color: Colors.white,
-                icon: _currentUser.uid == widget.lecturerID? const Icon(Icons.account_circle,color: Colors.black) :
-                      const Icon(Icons.message,color: Colors.blue),
-                onTap: (){
-                  if(_currentUser.uid == widget.lecturerID){
-                    print('NOPE');
-                    print(_currentUser.uid);
-                  }else{
-                    print('tapped');
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => chatroom(userID1: _currentUser.uid, userID2: widget.lecturerID),
-                      ),
-                    );
-                  }
-                },
-              ),
-              const Divider(thickness: 5,),
-              Expanded(
-                  child: _isLoading? const Center(child: CircularProgressIndicator(color: Colors.white,)) : _buildMemberListStream()
-              )
-            ],
-          ),
+          child: _isLoading? const Center(child: CircularProgressIndicator(color: Colors.white,)) : _buildMemberListStream(),
         ),
       ),
     );
@@ -158,7 +137,7 @@ Widget _buildMemberListStream() {
           return GFListTile(
             padding: const EdgeInsets.all(20),
             titleText: _nameMap[uID],
-            subTitleText:'${_studentIDMap[uID] ?? "Loading EMPTY"} \n${_batchMap[uID] ?? "..."}',
+            subTitleText: _iDMap[uID],
             color: Colors.white,
             icon: _currentUser.uid == uID ? Icon(Icons.account_circle,color: Colors.black,) : Icon(Icons.chat,color: Colors.blue,),
             onTap: (){
@@ -199,7 +178,7 @@ StreamBuilder showMemberList = StreamBuilder(
         return GFListTile(
           padding: const EdgeInsets.all(20),
           titleText: _nameMap[uID],
-          subTitleText:'${_studentIDMap[uID] ?? "Loading EMPTY"} \n${_batchMap[uID] ?? "..."}',
+          // subTitleText:'${_studentIDMap[uID] ?? "Loading EMPTY"} \n${_batchMap[uID] ?? "..."}',
           color: Colors.white,
           icon: _currentUser.uid == uID ? Icon(Icons.account_circle,color: Colors.black,) : Icon(Icons.chat,color: Colors.blue,),
           onTap: (){

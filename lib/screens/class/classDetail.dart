@@ -24,6 +24,7 @@ class _classDetailState extends State<classDetail> {
   var _appBarTitle ='';
   var _lecID='';
   var _isLoading = true;
+  String formattedLecHour = '';
 
   @override
   void initState() {
@@ -41,11 +42,37 @@ class _classDetailState extends State<classDetail> {
     final classCollection = await FirebaseFirestore.instance.collection('classes').doc(_classID).get();
     final classData = await classCollection.data() as Map<String, dynamic>;
 
+    final locationCollection = await FirebaseFirestore.instance.collection('locations').doc(classData['locationID']).get();
+    final locationData = await locationCollection.data() as Map<String, dynamic>;
+
     final subjectCollection = await FirebaseFirestore.instance.collection('subjects').doc(classData['subjectID']).get();
     final subjectData = await subjectCollection.data() as Map<String, dynamic>;
 
-    final lecturerCollection = await FirebaseFirestore.instance.collection('lecturers').doc(classData['lecturerID']).get();
-    final lecturerData = await lecturerCollection.data() as Map<String, dynamic>;
+    List<String> outputList = classData['lecturerID'].split(',');
+    List<String> lecturerNames = [];
+    for(var lecID in outputList){
+      String lecDocID = '';
+      QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
+          .collection('lecturers')
+          .where('lecturerID', isEqualTo: lecID)
+          .get();
+      List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot.docs;
+      for (DocumentSnapshot<Map<String, dynamic>> document in documents) {
+        lecDocID = document.id;
+      }
+      var lecturerCollection = await FirebaseFirestore.instance.collection('lecturers').doc(lecDocID).get();
+      var lecturerData = await lecturerCollection.data() as Map<String, dynamic>;
+      String lecName = lecturerData['name'];
+      lecturerNames.add(lecName);
+
+      if(classData['lectureHour'].contains(',')){
+        List<String> sessions = classData['lectureHour'].split(', ');
+        String formattedSessions = sessions.join('\n');
+        formattedLecHour = formattedSessions;
+      }else{
+        formattedLecHour = classData['lectureHour'];
+      }
+    }
 
     if(classData['className'] == null || classData['className'].isEmpty){
       _className = classData['subjectID'] + subjectData['name'];
@@ -57,14 +84,15 @@ class _classDetailState extends State<classDetail> {
       _showDataMap['className'] = _className;
       _showDataMap['subjectCode'] = classData['subjectID'];
       _showDataMap['subjectName'] = subjectData['name'];
-      _showDataMap['location'] = classData['locationID'];
-      _showDataMap['lecturerName'] = lecturerData['name'];
+      _showDataMap['location'] = locationData['roomNo'];
+      _showDataMap['imagePath'] = locationData['imagePath'];
+      _showDataMap['lecturerName'] = lecturerNames.join(', ');
       _lecID = classData['lecturerID'];
-      _showDataMap['lectureHour'] = classData['lectureHour'];
-      _showDataMap['lectureDay'] = classData['lectureDay'];
+      _showDataMap['lectureHour'] = formattedLecHour;
+      // _showDataMap['lectureDay'] = classData['lectureDay'];
       _isLoading = false;
-      print(_showDataMap);
-      print('done running');
+      // print(_showDataMap);
+      // print('done running');
     });
   }
 
@@ -170,12 +198,13 @@ class _classDetailState extends State<classDetail> {
 }
 
 Container showClassDetail(){
+  ScrollController _scrollController = ScrollController();
 return Container(
   height: 230,
   decoration: const BoxDecoration(
     borderRadius: BorderRadius.all(Radius.circular(10)),
     color: Colors.white,),
-  child: GFImageOverlay(
+  child: _showDataMap['imagePath']!.trim().isEmpty ? GFImageOverlay(
     height: 200,
     width: 300,
     image: AssetImage('images/location/IEB.jpg'),
@@ -183,59 +212,123 @@ return Container(
     colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.5), BlendMode.darken),
     child: Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
+      child: Scrollbar(
+        controller: _scrollController,
+        isAlwaysShown: true,
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('Class Name: ',style: TextStyle(color: GFColors.LIGHT),),
-              Expanded(child: Text('${_showDataMap["className"]}',style: const TextStyle(color: GFColors.WHITE),)),
+              Row(
+                children: [
+                  const Text('Class Name: ',style: TextStyle(color: GFColors.LIGHT),),
+                  Expanded(child: Text('${_showDataMap["className"]}',style: const TextStyle(color: GFColors.WHITE),)),
+                ],
+              ),
+              Divider(thickness: 3),
+              Row(
+                children: [
+                  const Text('Subject Code: ',style: TextStyle(color: GFColors.LIGHT),),
+                  Expanded(child: Text('${_showDataMap["subjectCode"]}',style: const TextStyle(color: GFColors.WHITE),)),
+                ],
+              ),
+              const Divider(thickness: 3),
+              Row(
+                children: [
+                  const Text('Subject Name: ',style: TextStyle(color: GFColors.LIGHT),),
+                  Expanded(child: Text('${_showDataMap["subjectName"]}',style: const TextStyle(color: GFColors.WHITE),)),
+                ],
+              ),
+              const Divider(thickness: 3),
+              Row(
+                children: [
+                  const Text('Venue: ',style: TextStyle(color: GFColors.LIGHT),),
+                  Expanded(child: Text('${_showDataMap["location"]}',style: const TextStyle(color: GFColors.WHITE),)),
+                ],
+              ),
+              const Divider(thickness: 3),
+              Row(
+                children: [
+                  const Text('Lecturer: ',style: TextStyle(color: GFColors.LIGHT),),
+                  Expanded(child: Text('${_showDataMap["lecturerName"]}',style: const TextStyle(color: GFColors.WHITE),)),
+                ],
+              ),
+              const Divider(thickness: 3),
+              Row(
+                children: [
+                  const Text('Lecture Hour: ',style: TextStyle(color: GFColors.LIGHT),),
+                  Expanded(child: Text('${_showDataMap["lectureHour"]}',style: const TextStyle(color: GFColors.WHITE),)),
+                ],
+              ),
             ],
           ),
-          Divider(thickness: 3),
-          Row(
+        ),
+      ),
+    ),
+  ) :
+  GFImageOverlay(
+    height: 200,
+    width: 300,
+    image: NetworkImage(_showDataMap['imagePath']!),
+    borderRadius: const BorderRadius.all(Radius.circular(10)),
+    colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.5), BlendMode.darken),
+    child: Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Scrollbar(
+        controller: _scrollController,
+        isAlwaysShown: true,
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('Subject Code: ',style: TextStyle(color: GFColors.LIGHT),),
-              Expanded(child: Text('${_showDataMap["subjectCode"]}',style: const TextStyle(color: GFColors.WHITE),)),
+              Row(
+                children: [
+                  const Text('Class Name: ',style: TextStyle(color: GFColors.LIGHT),),
+                  Expanded(child: Text('${_showDataMap["className"]}',style: const TextStyle(color: GFColors.WHITE),)),
+                ],
+              ),
+              Divider(thickness: 3),
+              Row(
+                children: [
+                  const Text('Subject Code: ',style: TextStyle(color: GFColors.LIGHT),),
+                  Expanded(child: Text('${_showDataMap["subjectCode"]}',style: const TextStyle(color: GFColors.WHITE),)),
+                ],
+              ),
+              const Divider(thickness: 3),
+              Row(
+                children: [
+                  const Text('Subject Name: ',style: TextStyle(color: GFColors.LIGHT),),
+                  Expanded(child: Text('${_showDataMap["subjectName"]}',style: const TextStyle(color: GFColors.WHITE),)),
+                ],
+              ),
+              const Divider(thickness: 3),
+              Row(
+                children: [
+                  const Text('Venue: ',style: TextStyle(color: GFColors.LIGHT),),
+                  Expanded(child: Text('${_showDataMap["location"]}',style: const TextStyle(color: GFColors.WHITE),)),
+                ],
+              ),
+              const Divider(thickness: 3),
+              Row(
+                children: [
+                  const Text('Lecturer: ',style: TextStyle(color: GFColors.LIGHT),),
+                  Expanded(child: Text('${_showDataMap["lecturerName"]}',style: const TextStyle(color: GFColors.WHITE),)),
+                ],
+              ),
+              const Divider(thickness: 3),
+              Row(
+                children: [
+                  const Text('Lecture Hour: ',style: TextStyle(color: GFColors.LIGHT),),
+                  Expanded(child: Text('${_showDataMap["lectureHour"]}',style: const TextStyle(color: GFColors.WHITE),)),
+                ],
+              ),
             ],
           ),
-          const Divider(thickness: 3),
-          Row(
-            children: [
-              const Text('Subject Name: ',style: TextStyle(color: GFColors.LIGHT),),
-              Expanded(child: Text('${_showDataMap["subjectName"]}',style: const TextStyle(color: GFColors.WHITE),)),
-            ],
-          ),
-          const Divider(thickness: 3),
-          Row(
-            children: [
-              const Text('Venue: ',style: TextStyle(color: GFColors.LIGHT),),
-              Expanded(child: Text('${_showDataMap["location"]}',style: const TextStyle(color: GFColors.WHITE),)),
-            ],
-          ),
-          const Divider(thickness: 3),
-          Row(
-            children: [
-              const Text('Lecturer: ',style: TextStyle(color: GFColors.LIGHT),),
-              Expanded(child: Text('${_showDataMap["lecturerName"]}',style: const TextStyle(color: GFColors.WHITE),)),
-            ],
-          ),
-          const Divider(thickness: 3),
-          Row(
-            children: [
-              const Text('Lecture Hour: ',style: TextStyle(color: GFColors.LIGHT),),
-              Expanded(child: Text('${_showDataMap["lectureHour"]}',style: const TextStyle(color: GFColors.WHITE),)),
-            ],
-          ),
-          const Divider(thickness: 3),
-          Row(
-            children: [
-              const Text('Lecture Day: ',style: TextStyle(color: GFColors.LIGHT),),
-              Text('${_showDataMap["lectureDay"]}',style: const TextStyle(color: GFColors.WHITE),),
-            ],
-          ),
-        ],
+        ),
       ),
     ),
   ),

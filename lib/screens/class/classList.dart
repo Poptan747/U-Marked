@@ -17,6 +17,7 @@ var _subjectIDMap = <String, String>{};
 var _subjectNameMap = <String, String>{};
 var _timeMap = <String, String>{};
 var _dateMap = <String, String>{};
+var _imagePathMap = <String, String>{};
 var _passData = <String, dynamic>{};
 var _isStudent = true;
 bool _isLoading = true;
@@ -116,11 +117,17 @@ class _myClassListState extends State<myClassList> {
           .doc(data['subjectID'])
           .get();
 
+      var locationData = await FirebaseFirestore.instance
+          .collection('locations')
+          .doc(data['locationID'])
+          .get();
+
       setState(() {
         _nameMap[classID] = data['className'];
         _subjectIDMap[classID] = data['subjectID'];
         _subjectNameMap[classID] = subjectData['name'];
         _timeMap[classID] = data['lectureHour'];
+        _imagePathMap[classID] = locationData['imagePath'];
 
         // Formatting the timestamp
         var classTimestamp = data['createAt'] as Timestamp;
@@ -138,6 +145,13 @@ class _myClassListState extends State<myClassList> {
         }else{
           _cardTitle[classID] = ('${_nameMap[classID]!}\n${_subjectIDMap[classID]!}${_subjectNameMap[classID]!}')!;
         }
+
+        if(_timeMap[classID]!.contains(',')){
+          List<String> sessions = _timeMap[classID]!.split(', ');
+          String formattedSessions = sessions.join('\n');
+          _timeMap[classID] = formattedSessions;
+        }
+
         _isLoading = false;
         // print('thru here again');
       });
@@ -167,13 +181,19 @@ class _myClassListState extends State<myClassList> {
             var orderData = orderSnapshot.data!.docs[index].data() as Map<String, dynamic>;
             var classID = orderData['classID'];
             return GFListTile(
-              avatar:GFAvatar(
-                backgroundImage: AssetImage('images/location/IEB.jpg'),
+              avatar: _imagePathMap[classID]!.trim().isEmpty ?
+              const GFAvatar(
+                backgroundImage: AssetImage('images/user/default_user.jpg'),
+                size: GFSize.LARGE,
+                shape: GFAvatarShape.standard,
+              ) :
+              GFAvatar(
+                backgroundImage: NetworkImage(_imagePathMap[classID]!),
                 size: GFSize.LARGE,
                 shape: GFAvatarShape.standard,
               ),
               titleText: _cardTitle[classID],
-              subTitleText:'${_timeMap[classID] ?? ""} \nCreate at ${_dateMap[classID] ?? "..."}',
+              subTitleText:_timeMap[classID] ?? "",
               color: Colors.white,
               icon: const Icon(Icons.keyboard_double_arrow_right),
               onTap: (){

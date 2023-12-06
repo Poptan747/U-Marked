@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
 import 'package:marquee/marquee.dart';
 import 'package:u_marked/reusable_widget/bottomSheet.dart';
+import 'package:u_marked/screens/admin/classManagement/addClassPage.dart';
 import 'package:u_marked/screens/class/memberList.dart';
 import 'gradientBackground.dart';
 
@@ -37,15 +38,17 @@ GFAppBar classDetailsAppBar(String className, BuildContext context){
   );
 }
 
-GFAppBar memberListAppBar = GFAppBar(
-  centerTitle: true,
-  elevation: 0,
-  // automaticallyImplyLeading: false,
-  flexibleSpace: Container(
-    decoration: myClassAppBarBackgroundDecoration,
-  ),
-  title: Text("Member List"),
-);
+GFAppBar memberListAppBar(int count){
+  return GFAppBar(
+    centerTitle: true,
+    elevation: 0,
+    // automaticallyImplyLeading: false,
+    flexibleSpace: Container(
+      decoration: myClassAppBarBackgroundDecoration,
+    ),
+    title: Text("Member List ($count)"),
+  );
+}
 
 GFAppBar AttendanceAppBar = GFAppBar(
   centerTitle: true,
@@ -206,6 +209,46 @@ GFAppBar locationListAppBar(BuildContext context) {
         type: GFButtonType.transparent,
       )
     ],
+  );
+}
+
+GFAppBar adminClassListAppBar(BuildContext context) {
+  return GFAppBar(
+    centerTitle: true,
+    elevation: 0,
+    // automaticallyImplyLeading: false,
+    flexibleSpace: Container(
+      decoration: myClassAppBarBackgroundDecoration,
+    ),
+    title: const Text("Class List"),
+    actions: [
+      GFIconButton(
+        icon: const Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const addClassPage(),
+            ),
+          );
+        },
+        type: GFButtonType.transparent,
+      )
+    ],
+  );
+}
+
+GFAppBar addClassAppBar(BuildContext context) {
+  return GFAppBar(
+    centerTitle: true,
+    elevation: 0,
+    // automaticallyImplyLeading: false,
+    flexibleSpace: Container(
+      decoration: myClassAppBarBackgroundDecoration,
+    ),
+    title: const Text("New Class"),
   );
 }
 

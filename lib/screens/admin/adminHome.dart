@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:u_marked/reusable_widget/alertDialog.dart';
 import 'package:u_marked/reusable_widget/gradientBackground.dart';
+import 'package:u_marked/screens/admin/classManagement/classList.dart';
 import 'package:u_marked/screens/admin/locationManagement/locationList.dart';
 import 'package:u_marked/screens/admin/userManagement/list.dart';
 
@@ -102,83 +104,17 @@ class _adminHomeState extends State<adminHome> {
                       borderRadius: BorderRadius.circular(6),
                       // color: Colors.blue.shade50,
                     ),
-                    child: Column(
+                    child: GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 20,
+                      mainAxisSpacing: 30,
                       children: [
-                        SizedBox(
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: ()=>{
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => userManagementList(),
-                                ),
-                              )
-                            },
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: const [
-                                Text('User Management',style: TextStyle(fontSize: 30),),
-                                SizedBox(width: 10,),
-                                Icon(Icons.supervised_user_circle),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 40,),
-                        SizedBox(
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: ()=>{},
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: const [
-                                Text('Class Management',style: TextStyle(fontSize: 30),),
-                                SizedBox(width: 10,),
-                                Icon(Icons.school),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 40,),
-                        SizedBox(
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: ()=>{},
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: const [
-                                Text('Attendance Management',style: TextStyle(fontSize: 30),),
-                                SizedBox(width: 10,),
-                                Icon(Icons.how_to_reg),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 40,),
-                        SizedBox(
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: ()=>{
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => locationList(),
-                                ),
-                              )
-                            },
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: const [
-                                Text('Location Management',style: TextStyle(fontSize: 30),),
-                                SizedBox(width: 10,),
-                                Icon(Icons.location_city),
-                              ],
-                            ),
-                          ),
-                        )
+                        itemDashboard('User Management', Icons.supervised_user_circle, Colors.deepOrange, 1),
+                        itemDashboard('Class Management', Icons.school, Colors.green, 2),
+                        itemDashboard('Attendance Management', Icons.how_to_reg, Colors.purple, 3),
+                        itemDashboard('Location Management', Icons.location_city, Colors.brown, 4),
                       ],
                     ),
                   ),
@@ -190,4 +126,55 @@ class _adminHomeState extends State<adminHome> {
       ),
     );
   }
+
+  itemDashboard(String title, IconData iconData, Color background , int index) =>
+      ElevatedButton(
+          onPressed: (){
+            switch (index) {
+              case 1:
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const userManagementList(),
+                  ),
+                );
+                break;
+              case 2:
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const adminClassList(),
+                  ),
+                );
+                break;
+              case 3 :
+                // Navigator.of(context).push(
+                //   MaterialPageRoute(
+                //     builder: (context) => memberList(classID: widget.classID, lecturerID: _lecID),
+                //   ),
+                // );
+                break;
+              case 4 :
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => locationList(),
+                ),
+              );
+                break;
+            }
+          },
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: background,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(iconData, color: Colors.white)
+              ),
+              const SizedBox(height: 8),
+              Text(title.toUpperCase(), style: const TextStyle(fontSize: 16), textAlign: TextAlign.center,)
+            ],
+          )
+      );
 }
