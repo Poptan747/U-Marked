@@ -51,6 +51,9 @@ class MyApp extends StatelessWidget {
             systemNavigationBarIconBrightness: Brightness.light
         ),
         child: MaterialApp(
+          theme: ThemeData(
+            primaryColor: Colors.blue,
+          ),
           debugShowCheckedModeBanner: false,
           home: StreamBuilder(
             stream: FirebaseAuth.instance.authStateChanges(),

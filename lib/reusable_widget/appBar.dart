@@ -50,6 +50,18 @@ GFAppBar memberListAppBar(int count){
   );
 }
 
+GFAppBar studentAttendanceListAppBar(int count){
+  return GFAppBar(
+    centerTitle: true,
+    elevation: 0,
+    // automaticallyImplyLeading: false,
+    flexibleSpace: Container(
+      decoration: myClassAppBarBackgroundDecoration,
+    ),
+    title: Text("Student Attendance List ($count)"),
+  );
+}
+
 GFAppBar AttendanceAppBar = GFAppBar(
   centerTitle: true,
   elevation: 0,
@@ -58,6 +70,16 @@ GFAppBar AttendanceAppBar = GFAppBar(
     decoration: myClassAppBarBackgroundDecoration,
   ),
   title: Text("Attendance"),
+);
+
+GFAppBar attendanceDashBoardAppBar = GFAppBar(
+  centerTitle: true,
+  elevation: 0,
+  // automaticallyImplyLeading: false,
+  flexibleSpace: Container(
+    decoration: myClassAppBarBackgroundDecoration,
+  ),
+  title: const Text("Attendance Dashboard"),
 );
 
 GFAppBar chatroomAppBar(String userName) {
@@ -249,6 +271,18 @@ GFAppBar addClassAppBar(BuildContext context) {
       decoration: myClassAppBarBackgroundDecoration,
     ),
     title: const Text("New Class"),
+  );
+}
+
+GFAppBar editClassAppBar(BuildContext context) {
+  return GFAppBar(
+    centerTitle: true,
+    elevation: 0,
+    // automaticallyImplyLeading: false,
+    flexibleSpace: Container(
+      decoration: myClassAppBarBackgroundDecoration,
+    ),
+    title: const Text("Edit Class"),
   );
 }
 

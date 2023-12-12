@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
 import 'package:u_marked/reusable_widget/appBar.dart';
 import 'package:u_marked/reusable_widget/gradientBackground.dart';
-import 'package:u_marked/screens/attendance.dart';
+import 'package:u_marked/screens/attendance/attendance.dart';
 import 'package:u_marked/screens/class/memberList.dart';
 
 
@@ -50,20 +50,25 @@ class _classDetailState extends State<classDetail> {
 
     List<String> outputList = classData['lecturerID'].split(',');
     List<String> lecturerNames = [];
-    for(var lecID in outputList){
+    for(var lecID in outputList) {
       String lecDocID = '';
-      QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
+      QuerySnapshot<
+          Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
           .collection('lecturers')
-          .where('lecturerID', isEqualTo: lecID)
+          .where('lecturerID', isEqualTo: lecID.trim())
           .get();
-      List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot.docs;
+      List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot
+          .docs;
       for (DocumentSnapshot<Map<String, dynamic>> document in documents) {
         lecDocID = document.id;
       }
-      var lecturerCollection = await FirebaseFirestore.instance.collection('lecturers').doc(lecDocID).get();
-      var lecturerData = await lecturerCollection.data() as Map<String, dynamic>;
+      var lecturerCollection = await FirebaseFirestore.instance.collection(
+          'lecturers').doc(lecDocID).get();
+      var lecturerData = await lecturerCollection.data() as Map<String,
+          dynamic>;
       String lecName = lecturerData['name'];
       lecturerNames.add(lecName);
+    }
 
       if(classData['lectureHour'].contains(',')){
         List<String> sessions = classData['lectureHour'].split(', ');
@@ -72,7 +77,6 @@ class _classDetailState extends State<classDetail> {
       }else{
         formattedLecHour = classData['lectureHour'];
       }
-    }
 
     if(classData['className'] == null || classData['className'].isEmpty){
       _className = classData['subjectID'] + subjectData['name'];
@@ -214,7 +218,6 @@ return Container(
       padding: const EdgeInsets.all(8.0),
       child: Scrollbar(
         controller: _scrollController,
-        isAlwaysShown: true,
         child: SingleChildScrollView(
           controller: _scrollController,
           child: Column(
@@ -278,7 +281,6 @@ return Container(
       padding: const EdgeInsets.all(8.0),
       child: Scrollbar(
         controller: _scrollController,
-        isAlwaysShown: true,
         child: SingleChildScrollView(
           controller: _scrollController,
           child: Column(

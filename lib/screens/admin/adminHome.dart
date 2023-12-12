@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:u_marked/reusable_widget/alertDialog.dart';
 import 'package:u_marked/reusable_widget/gradientBackground.dart';
+import 'package:u_marked/screens/admin/attendanceManagement/index.dart';
 import 'package:u_marked/screens/admin/classManagement/classList.dart';
 import 'package:u_marked/screens/admin/locationManagement/locationList.dart';
 import 'package:u_marked/screens/admin/userManagement/list.dart';
@@ -146,11 +147,11 @@ class _adminHomeState extends State<adminHome> {
                 );
                 break;
               case 3 :
-                // Navigator.of(context).push(
-                //   MaterialPageRoute(
-                //     builder: (context) => memberList(classID: widget.classID, lecturerID: _lecID),
-                //   ),
-                // );
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => googeMapTest(),
+                  ),
+                );
                 break;
               case 4 :
               Navigator.of(context).push(

@@ -6,8 +6,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:location/location.dart';
 import 'package:u_marked/models/userModel.dart';
 import 'package:u_marked/reusable_widget/alertDialog.dart';
 
@@ -24,8 +26,39 @@ class _FormBottomSheetState extends State<FormBottomSheet> {
   TextEditingController dateController = TextEditingController();
   TextEditingController startAtTimeController = TextEditingController();
   TextEditingController endAtTimeController = TextEditingController();
-  String selectedValue = 'Option 1';
+  String selectedValue = 'Close';
+  GoogleMapController? mapController;
+  late LatLng currentLocation;
+  bool locationLoaded = false;
+  bool isClose = true;
+  bool trackAble = false;
+
   final _form = GlobalKey<FormState>();
+  Set<Polygon> currentBuildingPolygons = {
+    Polygon(
+      polygonId: const PolygonId('Medium'),
+      points: const [
+        LatLng(1.5342624916037464, 103.68148554209574),
+      ],
+      strokeWidth: 2,
+      strokeColor: Colors.red,
+      fillColor: Colors.red.withOpacity(0.3),
+    ),
+  };
+  Set<Polygon> polygons = {
+    Polygon(
+      polygonId: const PolygonId('Main Building'),
+      points: const [
+        LatLng(1.5342624916037464, 103.68148554209574),
+        LatLng(1.5340989355078605, 103.68131253961893),
+        LatLng(1.5330693361767846, 103.68235860111629),
+        LatLng(1.5332395954729914, 103.68252758027968),
+      ],
+      strokeWidth: 2,
+      strokeColor: Colors.red,
+      fillColor: Colors.red.withOpacity(0.3),
+    ),
+  };
 
   @override
   void dispose() {
@@ -36,6 +69,125 @@ class _FormBottomSheetState extends State<FormBottomSheet> {
     super.dispose();
   }
 
+  @override
+  void initState() {
+    super.initState();
+    loadData();
+    getLocation();
+  }
+
+  void loadData() async{
+    DateTime currentDate = DateTime.now();
+    String currentDay = DateFormat('EEEE').format(currentDate);
+    QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
+        .collection('classes').doc(widget.classID).collection('classSession')
+        .where('day', isEqualTo: currentDay)
+        .get();
+    List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot.docs;
+    if(documents.isNotEmpty){
+      for (DocumentSnapshot<Map<String, dynamic>> document in documents) {
+        //show modal
+        showDialog(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+            title: const Text('New Attendance'),
+            content: const Text('Looks like you have a class today,\n'
+                'do you want to collect attendance based on today class session?'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'Cancel'),
+                child: const Text('No'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  setText(document);
+                  Navigator.pop(context);
+                },
+                child: const Text('Yes'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+
+    var classCollection = await FirebaseFirestore.instance.collection('classes').doc(widget.classID).get();
+    var classData = await classCollection.data() as Map<String, dynamic>;
+    var locationCollection = await FirebaseFirestore.instance.collection('locations').doc(classData['locationID']).get();
+    var locationData = await locationCollection.data() as Map<String, dynamic>;
+    setState(() {
+      List<GeoPoint> newPoints = List<GeoPoint>.from(locationData['polygons']);
+      Polygon newPolygon = Polygon(
+        polygonId: PolygonId('Medium'),
+        points: newPoints.map((point) => LatLng(point.latitude, point.longitude)).toList(),
+        strokeWidth: 2,
+        strokeColor: Colors.red,
+        fillColor: Colors.red.withOpacity(0.3),
+      );
+      polygons = {newPolygon};
+      currentBuildingPolygons = {newPolygon};
+      trackAble = locationData['trackAble'];
+    });
+  }
+
+  Future<void> getLocation() async {
+    Location location = Location();
+
+    bool _serviceEnabled;
+    PermissionStatus _permissionGranted;
+    LocationData _locationData;
+
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        return;
+      }
+    }
+
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
+        return;
+      }
+    }
+
+    _locationData = await location.getLocation();
+    setState(() {
+      currentLocation = LatLng(_locationData.latitude!, _locationData.longitude!);
+      locationLoaded = true;
+    });
+  }
+
+  void getCurrentBuildingGeo() async{
+    var classCollection = await FirebaseFirestore.instance.collection('classes').doc(widget.classID).get();
+    var classData = await classCollection.data() as Map<String, dynamic>;
+    var locationCollection = await FirebaseFirestore.instance.collection('locations').doc(classData['locationID']).get();
+    var locationData = await locationCollection.data() as Map<String, dynamic>;
+    setState(() {
+      List<GeoPoint> newPoints = List<GeoPoint>.from(locationData['polygons']);
+      Polygon newPolygon = Polygon(
+        polygonId: PolygonId('Medium'),
+        points: newPoints.map((point) => LatLng(point.latitude, point.longitude)).toList(),
+        strokeWidth: 2,
+        strokeColor: Colors.red,
+        fillColor: Colors.red.withOpacity(0.3),
+      );
+      polygons = {newPolygon};
+    });
+  }
+
+  void setText(DocumentSnapshot<Map<String, dynamic>> document) async{
+    final classSessionData = document.data() as Map<String, dynamic>;
+    String formattedDate = DateFormat.yMMMEd().format(DateTime.now());
+    setState(() {
+      dateController.text = formattedDate;
+      startAtTimeController.text = classSessionData['startFrom'];
+      endAtTimeController.text = classSessionData['endAt'];
+    });
+  }
+
   void _submit() async{
     final isValid = _form.currentState!.validate();
     if(!isValid){
@@ -44,20 +196,32 @@ class _FormBottomSheetState extends State<FormBottomSheet> {
     _form.currentState!.save();
 
     try{
-      var attendanceRecord =
+      var classCollection = await FirebaseFirestore.instance.collection('classes').doc(widget.classID).get();
+      var classData = await classCollection.data() as Map<String, dynamic>;
+      List<GeoPoint> geoPoints = [];
+      if(selectedValue == 'Close'){
+        geoPoints.add(GeoPoint(currentLocation.latitude, currentLocation.longitude));
+      }else{
+        geoPoints = polygons.first.points
+            .map((point) => GeoPoint(point.latitude, point.longitude))
+            .toList();
+      }
+
+      String date = dateController.text;
       FirebaseFirestore.instance.collection('attendanceRecord').add({
         'classID' : widget.classID,
         'startAt' : startAtTimeController.text,
         'endAt' : endAtTimeController.text,
-        'date' : dateController.text,
+        'date' : date,
         'createBy': FirebaseAuth.instance.currentUser!.uid,
-        'attendanceType': 1,
-        'geofencingRange': selectedValue,
+        'geofencingType': selectedValue,
+        'polygons': geoPoints,
         'markedUser' : 0,
 
       }).then((value){
         FirebaseFirestore.instance.collection('classes').doc(widget.classID).collection('attendanceRecord').doc(value.id).set({
-          'attendanceRecordID' : value.id
+          'attendanceRecordID' : value.id,
+          'date' : date,
         });
         loadClass(widget.classID,value.id);
       });
@@ -84,194 +248,346 @@ class _FormBottomSheetState extends State<FormBottomSheet> {
   }
 
   loadClass(String classID, String recordID) async{
-    final studentCollection = await FirebaseFirestore.instance.collection('classes').doc(classID).collection('members').get();
-    for (var doc in studentCollection.docs) {
-      var studentData = doc.data() as Map<String, dynamic>;
-      var studentUID = studentData['uid'];
-      FirebaseFirestore.instance.collection('attendanceRecord').doc(recordID).collection('studentAttendanceList').add({
-        'attendanceRecordID' : recordID,
-        'studentUID' : studentUID,
-        'attendanceStatus' : 0, //0=pending 1=Present 2=Absent 3=Late 4=Leave early 5=sick
-        'attendanceTime' : '',
-        'notes': '',
-      }).then((value){
-        FirebaseFirestore.instance.collection('students').doc(studentUID).collection('attendanceRecord').doc(recordID).set({
+    // final studentCollection = await FirebaseFirestore.instance.collection('classes').doc(classID).collection('members').get();
+
+    String userDocID = '';
+    QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
+        .collection('classes').doc(classID).collection('members').get();
+
+    List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot.docs;
+    for (DocumentSnapshot<Map<String, dynamic>> document in documents) {
+      userDocID = document.id;
+      var userCollection = await FirebaseFirestore.instance.collection('users').doc(userDocID).get();
+      var userData = await userCollection.data() as Map<String, dynamic>;
+
+      if(userData['userType'] == 1){
+        FirebaseFirestore.instance.collection('attendanceRecord').doc(recordID).collection('studentAttendanceList').add({
           'attendanceRecordID' : recordID,
-          'studentAttendanceRecordID' : value.id
+          'studentUID' : userDocID,
+          'attendanceStatus' : 0, //0=pending 1=Present 2=Absent 3=Late 4=Leave early 5=sick
+          'attendanceTime' : '',
+          'notes': '',
+        }).then((value){
+          FirebaseFirestore.instance.collection('students').doc(userDocID).collection('attendanceRecord').doc(recordID).set({
+            'attendanceRecordID' : recordID,
+            'studentAttendanceRecordID' : value.id,
+            'createAt' : DateTime.now()
+          });
         });
-      });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _form,
-      child: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            const Text(
-              'New Attendance',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextFormField(
-              controller: dateController,
-              decoration: const InputDecoration(labelText: 'Attendance Date',icon:Icon(Icons.date_range)),
-              readOnly: true,
-              validator: (value){
-                if(value == null || value.trim().isEmpty){
-                  return 'Please select a date';
-                }
-              },
-              onTap: () async{
-                DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(), //get today's date
-                    firstDate: DateTime(2000), //DateTime.now() - not to allow to choose before today.
-                    lastDate: DateTime(2101)
-                );
-                if(pickedDate != null ){
-                  String formattedDate = DateFormat.yMMMEd().format(pickedDate);
-                  setState(() {
-                    dateController.text = formattedDate;
-                  });
-                }else{
-                  print("Date is not selected");
-                }
-              },
-            ),
-            TextFormField(
-              controller: startAtTimeController,
-              decoration: const InputDecoration(labelText: 'Start at',icon:Icon(Icons.access_time)),
-              readOnly: true,
-              validator: (value){
-                if(value == null || value.trim().isEmpty){
-                  return 'Please select a start at time';
-                }
-              },
-              onTap: () async{
-                DateTime datetime = DateTime.now();
-                var pickedTime = await showTimePicker(
-                  context: context,
-                  initialTime: TimeOfDay(hour: datetime.hour, minute: datetime.minute),
-                );
-                if(pickedTime != null ){
-                  DateTime selectedDateTime = DateTime(
-                    datetime.year,
-                    datetime.month,
-                    datetime.day,
-                    pickedTime.hour,
-                    pickedTime.minute,
-                  );
-                  print(selectedDateTime);
-                  String formattedTime = DateFormat.jm().format(selectedDateTime);
-                  setState(() {
-                    startAtTimeController.text = formattedTime;
-                  });
-                }else{
-                  print("Date is not selected");
-                }
-              },
-            ),
-            TextFormField(
-              controller: endAtTimeController,
-              decoration: const InputDecoration(labelText: 'End at',icon:Icon(Icons.access_time)),
-              readOnly: true,
-              validator: (value){
-                if(value == null || value.trim().isEmpty){
-                  return 'Please select a end at time';
-                }
-              },
-              onTap: () async{
-                DateTime datetime = DateTime.now();
-                var pickedTime = await showTimePicker(
-                  context: context,
-                  initialTime: TimeOfDay(hour: datetime.hour, minute: datetime.minute),
-                );
-                if(pickedTime != null ){
-                  DateTime selectedDateTime = DateTime(
-                    datetime.year,
-                    datetime.month,
-                    datetime.day,
-                    pickedTime.hour,
-                    pickedTime.minute,
-                  );
+    return SafeArea(
+      child: Form(
+        key: _form,
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Scrollbar(
+            scrollbarOrientation: ScrollbarOrientation.right,
+            thumbVisibility: true,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  const Text(
+                    'New Attendance',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: dateController,
+                    decoration: const InputDecoration(labelText: 'Attendance Date',icon:Icon(Icons.date_range)),
+                    readOnly: true,
+                    validator: (value){
+                      if(value == null || value.trim().isEmpty){
+                        return 'Please select a date';
+                      }
+                    },
+                    onTap: () async{
+                      DateTime? pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(), //get today's date
+                          firstDate: DateTime(2000), //DateTime.now() - not to allow to choose before today.
+                          lastDate: DateTime(2101)
+                      );
+                      if(pickedDate != null ){
+                        String formattedDate = DateFormat.yMMMEd().format(pickedDate);
+                        setState(() {
+                          dateController.text = formattedDate;
+                        });
+                      }else{
+                        print("Date is not selected");
+                      }
+                    },
+                  ),
+                  TextFormField(
+                    controller: startAtTimeController,
+                    decoration: const InputDecoration(labelText: 'Start at',icon:Icon(Icons.access_time)),
+                    readOnly: true,
+                    validator: (value){
+                      if(value == null || value.trim().isEmpty){
+                        return 'Please select a start at time';
+                      }
+                    },
+                    onTap: () async{
+                      DateTime datetime = DateTime.now();
+                      var pickedTime = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay(hour: datetime.hour, minute: datetime.minute),
+                      );
+                      if(pickedTime != null ){
+                        DateTime selectedDateTime = DateTime(
+                          datetime.year,
+                          datetime.month,
+                          datetime.day,
+                          pickedTime.hour,
+                          pickedTime.minute,
+                        );
+                        print(selectedDateTime);
+                        String formattedTime = DateFormat.jm().format(selectedDateTime);
+                        setState(() {
+                          startAtTimeController.text = formattedTime;
+                        });
+                      }else{
+                        print("Date is not selected");
+                      }
+                    },
+                  ),
+                  TextFormField(
+                    controller: endAtTimeController,
+                    decoration: const InputDecoration(labelText: 'End at',icon:Icon(Icons.access_time)),
+                    readOnly: true,
+                    validator: (value){
+                      if(value == null || value.trim().isEmpty){
+                        return 'Please select a end at time';
+                      }
+                    },
+                    onTap: () async{
+                      DateTime datetime = DateTime.now();
+                      var pickedTime = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay(hour: datetime.hour, minute: datetime.minute),
+                      );
+                      if(pickedTime != null ){
+                        DateTime selectedDateTime = DateTime(
+                          datetime.year,
+                          datetime.month,
+                          datetime.day,
+                          pickedTime.hour,
+                          pickedTime.minute,
+                        );
 
-                  if(startAtTimeController.text.isNotEmpty){
-                    DateTime startDateTime = DateFormat.jm().parse(startAtTimeController.text);
+                        if(startAtTimeController.text.isNotEmpty){
+                          DateTime startDateTime = DateFormat.jm().parse(startAtTimeController.text);
 
-                    DateTime compareStartTime = DateTime(
-                      datetime.year,
-                      datetime.month,
-                      datetime.day,
-                      startDateTime.hour,
-                      startDateTime.minute
-                    );
+                          DateTime compareStartTime = DateTime(
+                            datetime.year,
+                            datetime.month,
+                            datetime.day,
+                            startDateTime.hour,
+                            startDateTime.minute
+                          );
 
-                    if(selectedDateTime.isAfter(compareStartTime)){
-                      String formattedTime = DateFormat.jm().format(selectedDateTime);
+                          if(selectedDateTime.isAfter(compareStartTime)){
+                            String formattedTime = DateFormat.jm().format(selectedDateTime);
+                            setState(() {
+                              endAtTimeController.text = formattedTime;
+                            });
+                          } else{
+                            Alerts().timePickerAlertDialog(context);
+                          }
+                        }else{
+                          Alerts().startAtFirstAlertDialog(context);
+                        }
+                      }else{
+                        print("Date is not selected");
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  locationLoaded ? googleMapWidget() : const Center(child: CircularProgressIndicator()),
+                  DropdownButtonFormField<String>(
+                    value: 'Close',
+                    decoration: const InputDecoration(
+                        labelText: 'Select an GeoFencing option',
+                        icon:Icon(Icons.share_location)
+                    ),
+                    items: trackAble ? const [
+                      DropdownMenuItem(
+                        value: 'Close',
+                        child: Text('Close - Current Location (10 meters)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Medium',
+                        child: Text('Medium - Building range'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Large',
+                        child: Text('Large - Campus range'),
+                      ),
+                    ] :
+                    const [
+                      DropdownMenuItem(
+                        value: 'Close',
+                        child: Text('Close - Current Location (10 meters)'),
+                      )
+                    ],
+                    onChanged: (value) {
                       setState(() {
-                        endAtTimeController.text = formattedTime;
+                        selectedValue = value!;
+                        if(selectedValue == 'Close'){
+                          isClose = true;
+                        }else{
+                          isClose = false;
+                        }
+                        updateHighlightedArea();
                       });
-                    } else{
-                      Alerts().timePickerAlertDialog(context);
-                    }
-                  }else{
-                    Alerts().startAtFirstAlertDialog(context);
-                  }
-                }else{
-                  print("Date is not selected");
-                }
-              },
-            ),
-            SizedBox(height: 20),
-            DropdownButtonFormField<String>(
-              value: selectedValue,
-              icon: Icon(Icons.share_location),
-              onChanged: (newValue) {
-                print(newValue);
-                setState(() {
-                  selectedValue = newValue!;
-                });
-              },
-              validator: (value){
-                if(value == null || value.trim().isEmpty){
-                  return 'Please select a Geofencing option';
-                }
-              },
-              items: ['Option 1', 'Option 2', 'Option 3']
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text('${['Close - Classroom range', 'Medium - Building range', 'Large - Campus range']
-                  [['Option 1', 'Option 2', 'Option 3'].indexOf(value)]}'),
-                );
-              }).toList(),
-              decoration: InputDecoration(
-                labelText: 'Select an GeoFencing option',
-                border: OutlineInputBorder(),
+                    },
+                  ),
+
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      String itemName = _textEditingController.text;
+                      _submit();
+                      // Navigator.pop(context);
+                    },
+                    child: const Text('Start Capture Attendance'),
+                  ),
+                ],
               ),
             ),
-
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                String itemName = _textEditingController.text;
-                _submit();
-                // Navigator.pop(context);
-              },
-              child: Text('Add new attendance record'),
-            ),
-          ],
+          ),
         ),
       ),
     );
+  }
+
+  Widget googleMapWidget() {
+    return SizedBox(
+      height: 200,
+      width: MediaQuery.of(context).size.width,
+      child: isClose ?
+      GoogleMap(
+        onMapCreated: (controller) {
+          setState(() {
+            mapController = controller;
+          });
+        },
+        initialCameraPosition: CameraPosition(
+          target: currentLocation,
+          zoom: 19.0,
+        ),
+        markers: {
+          Marker(
+            markerId: MarkerId('currentLocation'),
+            position: currentLocation,
+            infoWindow: const InfoWindow(title: 'Current Location'),
+          ),
+        },
+        circles: {
+          Circle(
+            circleId: CircleId('radiusCircle'),
+            center: currentLocation,
+            radius: isClose ? 10 : 0, // in meters
+            strokeWidth: 2,
+            strokeColor: Colors.red,
+            fillColor: Colors.red.withOpacity(0.2),
+          ),
+        },
+      ) :
+      GoogleMap(
+          onMapCreated: (controller) {
+            setState(() {
+              mapController = controller;
+            });
+          },
+          initialCameraPosition: const CameraPosition(
+            target: LatLng(1.5331988034221635, 103.6828984846777),
+            zoom: 15.0, // Initial zoom level
+          ),
+          polygons: polygons
+      ),
+    );
+  }
+
+  void updateHighlightedArea() {
+    setState(() {
+      polygons.clear();
+      polygons.add(getPolygon(selectedValue));
+    });
+    fitBounds();
+  }
+
+  void fitBounds() {
+    LatLngBounds bounds = getPolygonBounds(polygons.first.points);
+    mapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50.0));
+  }
+
+  LatLngBounds getPolygonBounds(List<LatLng> polygonPoints) {
+    double minLat = polygonPoints.first.latitude;
+    double maxLat = polygonPoints.first.latitude;
+    double minLng = polygonPoints.first.longitude;
+    double maxLng = polygonPoints.first.longitude;
+
+    for (LatLng point in polygonPoints) {
+      if (point.latitude < minLat) {
+        minLat = point.latitude;
+      } else if (point.latitude > maxLat) {
+        maxLat = point.latitude;
+      }
+
+      if (point.longitude < minLng) {
+        minLng = point.longitude;
+      } else if (point.longitude > maxLng) {
+        maxLng = point.longitude;
+      }
+    }
+
+    return LatLngBounds(
+      southwest: LatLng(minLat, minLng),
+      northeast: LatLng(maxLat, maxLng),
+    );
+  }
+
+  Polygon getPolygon(String option) {
+    switch (option) {
+      case 'Medium':
+        return currentBuildingPolygons.firstWhere(
+              (polygon) => polygon.polygonId.value == option,
+          orElse: () => Polygon(polygonId: PolygonId('Default'), points: []),
+        );
+      case 'Large':
+        return Polygon(
+          polygonId: PolygonId(option),
+          points: const [
+            LatLng(1.5332594730194127, 103.6797866407739),
+            LatLng(1.5317472482436094, 103.68148179682997),
+            LatLng(1.5340852974473582, 103.68373485238267),
+            LatLng(1.5355278081800041, 103.68183584842873),
+          ],
+          strokeWidth: 2,
+          strokeColor: Colors.red,
+          fillColor: Colors.red.withOpacity(0.3),
+        );
+      default:
+      // Use default polygon for 'Other'
+        return Polygon(
+          polygonId: PolygonId('Close'),
+          points: [
+            currentLocation
+          ],
+          strokeWidth: 2,
+          strokeColor: Colors.red,
+          fillColor: Colors.red.withOpacity(0.3),
+        );
+    }
   }
 }
 
@@ -1617,9 +1933,24 @@ class _createLocationBottomSheetState extends State<createLocationBottomSheet> {
   String selectedOption = 'Option 1';
   bool showOtherInput = false;
   File? _pickedImageFile;
+  GoogleMapController? mapController;
   TextEditingController otherInputController = TextEditingController();
   TextEditingController roomNameInputController = TextEditingController();
   TextEditingController roomImageInputController = TextEditingController();
+  Set<Polygon> polygons = {
+    Polygon(
+      polygonId: const PolygonId('Main Building'),
+      points: const [
+        LatLng(1.5342624916037464, 103.68148554209574),
+        LatLng(1.5340989355078605, 103.68131253961893),
+        LatLng(1.5330693361767846, 103.68235860111629),
+        LatLng(1.5332395954729914, 103.68252758027968),
+      ],
+      strokeWidth: 2,
+      strokeColor: Colors.red,
+      fillColor: Colors.red.withOpacity(0.3),
+    ),
+  };
 
   @override
   void dispose() {
@@ -1640,10 +1971,15 @@ class _createLocationBottomSheetState extends State<createLocationBottomSheet> {
     _createLocationForm.currentState!.save();
 
     try{
+      List<GeoPoint> geoPoints = polygons.first.points
+          .map((point) => GeoPoint(point.latitude, point.longitude))
+          .toList();
 
       FirebaseFirestore.instance.collection('locations').add({
         'roomNo' : roomNameInputController.text,
+        'polygons': geoPoints,
         'building' : selectedOption,
+        'trackAble' : !showOtherInput,
       }).then((doc) async {
         final storageRef = FirebaseStorage.instance.ref().child('location_images').child('${doc.id}.jpg');
         await storageRef.putFile(_pickedImageFile!);
@@ -1693,7 +2029,7 @@ class _createLocationBottomSheetState extends State<createLocationBottomSheet> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
                 const Text(
                   'New Location',
                   style: TextStyle(
@@ -1701,8 +2037,32 @@ class _createLocationBottomSheetState extends State<createLocationBottomSheet> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                const SizedBox(height: 10),
+                _pickedImageFile!= null?
+                GFImageOverlay(
+                  height: 200,
+                  width: 300,
+                  shape: BoxShape.rectangle,
+                  borderRadius: const BorderRadius.all(Radius.circular(10)),
+                  image: FileImage(_pickedImageFile!),
+                ) :
+                const SizedBox(height: 10),
                 _errorMessage.trim().isNotEmpty ?
-                Text(_errorMessage, style: TextStyle(color: Colors.red),) :
+                Text(_errorMessage, style: TextStyle(color: Colors.red),) : const SizedBox(height: 10),
+                TextFormField(
+                  controller: roomImageInputController,
+                  readOnly: true,
+                  decoration: const InputDecoration(labelText: 'Room image',icon: Icon(Icons.image)),
+                  onTap: _pickImage,
+                  validator: (value){
+                    if(value == null || value.trim().isEmpty){
+                      return 'Please upload a image. ';
+                    }
+                  },
+                  onSaved: (value){
+                    // roomNameInputController.text = value!;
+                  },
+                ),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: roomNameInputController,
@@ -1717,6 +2077,22 @@ class _createLocationBottomSheetState extends State<createLocationBottomSheet> {
                   },
                 ),
                 const SizedBox(height: 10),
+                if(!showOtherInput)SizedBox(
+                  height: 200,
+                  width: MediaQuery.of(context).size.width,
+                  child: GoogleMap(
+                    onMapCreated: (controller) {
+                      setState(() {
+                        mapController = controller;
+                      });
+                    },
+                    initialCameraPosition: const CameraPosition(
+                      target: LatLng(1.5331988034221635, 103.6828984846777), // Initial map center
+                      zoom: 15.0, // Initial zoom level
+                    ),
+                    polygons: polygons
+                  ),
+                ),
                 DropdownButtonFormField<String>(
                   value: 'Main Building',
                   decoration: const InputDecoration(
@@ -1733,6 +2109,10 @@ class _createLocationBottomSheetState extends State<createLocationBottomSheet> {
                       child: Text('IEB'),
                     ),
                     DropdownMenuItem(
+                      value: 'TCM',
+                      child: Text('TCM'),
+                    ),
+                    DropdownMenuItem(
                       value: 'Other',
                       child: Text('Other'),
                     ),
@@ -1744,6 +2124,7 @@ class _createLocationBottomSheetState extends State<createLocationBottomSheet> {
                       } else {
                         selectedOption = value!;
                         showOtherInput = false;
+                        updateHighlightedArea();
                       }
                     });
                   },
@@ -1752,7 +2133,7 @@ class _createLocationBottomSheetState extends State<createLocationBottomSheet> {
                 if (showOtherInput)
                   TextFormField(
                     controller: otherInputController,
-                    decoration: const InputDecoration(labelText: 'Other Option'),
+                    decoration: const InputDecoration(labelText: "Building Name"),
                     validator: (value){
                       if(showOtherInput = true){
                         if(value == null || value.trim().isEmpty || value.trim().length > 50){
@@ -1767,36 +2148,11 @@ class _createLocationBottomSheetState extends State<createLocationBottomSheet> {
                     },
                   ),
                 const SizedBox(height: 10),
-                TextFormField(
-                  controller: roomImageInputController,
-                  readOnly: true,
-                  decoration: const InputDecoration(labelText: 'Room image',icon: Icon(Icons.image)),
-                  onTap: _pickImage,
-                  validator: (value){
-                    if(value == null || value.trim().isEmpty){
-                      return 'Please upload a image. ';
-                    }
-                  },
-                  onSaved: (value){
-                    // roomNameInputController.text = value!;
-                  },
-                ),
-                const SizedBox(height: 10),
-                _pickedImageFile!= null?
-                GFImageOverlay(
-                    height: 200,
-                    width: 300,
-                    shape: BoxShape.rectangle,
-                    borderRadius: const BorderRadius.all(Radius.circular(10)),
-                    image: FileImage(_pickedImageFile!),
-                ) :
-                const SizedBox(height: 10),
-                const SizedBox(height: 10),
                 ElevatedButton(
                   onPressed: () {
                     _submit();
                   },
-                  child: const Text('Create new location'),
+                  child: const Text('Create new location',style: TextStyle(color: Colors.black),),
                 ),
               ],
             ),
@@ -1804,6 +2160,102 @@ class _createLocationBottomSheetState extends State<createLocationBottomSheet> {
         ),
       ),
     );
+  }
+  void updateHighlightedArea() {
+    setState(() {
+      polygons.clear();
+      polygons.add(getPolygon(selectedOption));
+    });
+    fitBounds();
+  }
+
+  void fitBounds() {
+    LatLngBounds bounds = getPolygonBounds(polygons.first.points);
+    mapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50.0));
+  }
+
+  LatLngBounds getPolygonBounds(List<LatLng> polygonPoints) {
+    double minLat = polygonPoints.first.latitude;
+    double maxLat = polygonPoints.first.latitude;
+    double minLng = polygonPoints.first.longitude;
+    double maxLng = polygonPoints.first.longitude;
+
+    for (LatLng point in polygonPoints) {
+      if (point.latitude < minLat) {
+        minLat = point.latitude;
+      } else if (point.latitude > maxLat) {
+        maxLat = point.latitude;
+      }
+
+      if (point.longitude < minLng) {
+        minLng = point.longitude;
+      } else if (point.longitude > maxLng) {
+        maxLng = point.longitude;
+      }
+    }
+
+    return LatLngBounds(
+      southwest: LatLng(minLat, minLng),
+      northeast: LatLng(maxLat, maxLng),
+    );
+  }
+
+  Polygon getPolygon(String option) {
+    switch (option) {
+      case 'TCM':
+        return Polygon(
+          polygonId: PolygonId(option),
+          points: const [
+            LatLng(1.5331988034221635, 103.6828984846777),
+            LatLng(1.533319427323412, 103.68277217892413),
+            LatLng(1.533744429243514, 103.68315899029903),
+            LatLng(1.5336283146701633, 103.68329657335201),
+          ],
+          strokeWidth: 2,
+          strokeColor: Colors.red,
+          fillColor: Colors.red.withOpacity(0.3),
+        );
+      case 'IEB':
+        return Polygon(
+          polygonId: PolygonId(option),
+          points: const [
+            LatLng(1.5350882134102046, 103.68230715997088),
+            LatLng(1.5345876809556778, 103.68185606799385),
+            LatLng(1.5343982902666615, 103.68208838036203),
+            LatLng(1.5348920588136077, 103.68254849417856),
+          ],
+          strokeWidth: 2,
+          strokeColor: Colors.red,
+          fillColor: Colors.red.withOpacity(0.3),
+        );
+      case 'Main Building':
+        return Polygon(
+          polygonId: PolygonId(option),
+          points: const [
+            LatLng(1.5342624916037464, 103.68148554209574),
+            LatLng(1.5340989355078605, 103.68131253961893),
+            LatLng(1.5330693361767846, 103.68235860111629),
+            LatLng(1.5332395954729914, 103.68252758027968),
+          ],
+          strokeWidth: 2,
+          strokeColor: Colors.red,
+          fillColor: Colors.red.withOpacity(0.3),
+        );
+      default:
+      // Use default polygon for 'Other'
+        return Polygon(
+          polygonId: PolygonId('Other'),
+          points: [
+            LatLng(1.5331988034221635, 103.6828984846777),
+            LatLng(1.533319427323412, 103.68277217892413),
+            LatLng(1.533744429243514, 103.68315899029903),
+            LatLng(1.5336283146701633, 103.68329657335201),
+          ],
+          strokeWidth: 2,
+          strokeColor: Colors.red,
+          fillColor: Colors.red.withOpacity(0.3),
+        );
+    }
   }
 }
 
@@ -1822,10 +2274,25 @@ class _editLocationBottomSheet extends State<editLocationBottomSheet> {
   bool showOtherInput = false;
   String imageUrl = '';
   File? _pickedImageFile;
+  GoogleMapController? mapController;
   TextEditingController otherInputController = TextEditingController();
   TextEditingController roomNameInputController = TextEditingController();
   TextEditingController roomImageInputController = TextEditingController();
   bool isLoading = false;
+  Set<Polygon> polygons = {
+    Polygon(
+      polygonId: const PolygonId('Main Building'),
+      points: const [
+        LatLng(1.5342624916037464, 103.68148554209574),
+        LatLng(1.5340989355078605, 103.68131253961893),
+        LatLng(1.5330693361767846, 103.68235860111629),
+        LatLng(1.5332395954729914, 103.68252758027968),
+      ],
+      strokeWidth: 2,
+      strokeColor: Colors.red,
+      fillColor: Colors.red.withOpacity(0.3),
+    ),
+  };
 
   @override
   void dispose() {
@@ -1845,11 +2312,26 @@ class _editLocationBottomSheet extends State<editLocationBottomSheet> {
     String locationId = widget.locationId;
     var userCollection = await FirebaseFirestore.instance.collection('locations').doc(locationId).get();
     var data = await userCollection.data() as Map<String, dynamic>;
-
     setState(() {
       roomNameInputController.text = data['roomNo'];
       selectedOption = data['building'];
       imageUrl = data['imagePath'];
+      if(selectedOption == 'TCM' || selectedOption == 'IEB' || selectedOption == 'Main Building'){
+        showOtherInput = false;
+      }else{
+        showOtherInput = true;
+        otherInputController.text = data['building'];
+      }
+
+      List<GeoPoint> newPoints = List<GeoPoint>.from(data['polygons']);
+      Polygon newPolygon = Polygon(
+        polygonId: PolygonId(data['building']),
+        points: newPoints.map((point) => LatLng(point.latitude, point.longitude)).toList(),
+        strokeWidth: 2,
+        strokeColor: Colors.red,
+        fillColor: Colors.red.withOpacity(0.3),
+      );
+      polygons = {newPolygon};
     });
   }
 
@@ -1870,8 +2352,12 @@ class _editLocationBottomSheet extends State<editLocationBottomSheet> {
         isLoading = true;
       });
       String locationID = widget.locationId;
+      List<GeoPoint> geoPoints = polygons.first.points
+          .map((point) => GeoPoint(point.latitude, point.longitude))
+          .toList();
       FirebaseFirestore.instance.collection('locations').doc(locationID).update({
         'roomNo' : roomNameInputController.text,
+        'polygons': geoPoints,
         'building' : selectedOption,
       }).then((doc) async {
         if(_pickedImageFile!=null){
@@ -1934,42 +2420,46 @@ class _editLocationBottomSheet extends State<editLocationBottomSheet> {
               children: <Widget>[
                 const SizedBox(height: 20),
                 const Text(
-                  'New Location',
+                  'Edit Location Information',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 20),
-                Center(
-                  child: SizedBox(
-                    height: 200,
-                    width: 300,
-                    child: Image.network(
-                      imageUrl,
-                      loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-                        if (loadingProgress == null) {
-                          return child;
-                        } else {
-                          return Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)
-                                  : null,
-                            ),
-                          );
-                        }
-                      },
-                      errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
-                        return const Text('Error loading image');
-                      },
-                    ),
-                  ),
+                _pickedImageFile!= null?
+                GFImageOverlay(
+                  height: 200,
+                  width: 300,
+                  shape: BoxShape.rectangle,
+                  borderRadius: const BorderRadius.all(Radius.circular(10)),
+                  image: FileImage(_pickedImageFile!),
+                ) : imageUrl.trim().isNotEmpty?
+                GFImageOverlay(
+                  height: 200,
+                  width: 300,
+                  shape: BoxShape.rectangle,
+                  borderRadius: const BorderRadius.all(Radius.circular(10)),
+                  image: NetworkImage(imageUrl),
+                ) :
+                const CircleAvatar(
+                  foregroundImage: AssetImage('images/user/default_user.jpg'),
+                  radius: 50,
                 ),
                 const SizedBox(height: 10),
                 isLoading? const CircularProgressIndicator() : const SizedBox(height: 1),
                 _errorMessage.trim().isNotEmpty ?
                 Text(_errorMessage, style: TextStyle(color: Colors.red),) :
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: roomImageInputController,
+                  readOnly: true,
+                  decoration: const InputDecoration(labelText: 'Room image',icon: Icon(Icons.image)),
+                  onTap: _pickImage,
+                  onSaved: (value){
+                    // roomNameInputController.text = value!;
+                  },
+                ),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: roomNameInputController,
@@ -1984,8 +2474,24 @@ class _editLocationBottomSheet extends State<editLocationBottomSheet> {
                   },
                 ),
                 const SizedBox(height: 10),
+                if(!showOtherInput)SizedBox(
+                  height: 200,
+                  width: MediaQuery.of(context).size.width,
+                  child: GoogleMap(
+                      onMapCreated: (controller) {
+                        setState(() {
+                          mapController = controller;
+                        });
+                      },
+                      initialCameraPosition: const CameraPosition(
+                        target: LatLng(1.5331988034221635, 103.6828984846777), // Initial map center
+                        zoom: 16.0, // Initial zoom level
+                      ),
+                      polygons: polygons
+                  ),
+                ),
                 DropdownButtonFormField<String>(
-                  value: selectedOption != 'Main Building' && selectedOption!= 'IEB'? 'Other': selectedOption,
+                  value: selectedOption == 'TCM' || selectedOption == 'IEB' || selectedOption == 'Main Building'? selectedOption : 'Other',
                   decoration: const InputDecoration(
                       labelText: 'Select a building',
                       icon:Icon(Icons.maps_home_work)
@@ -2000,6 +2506,10 @@ class _editLocationBottomSheet extends State<editLocationBottomSheet> {
                       child: Text('IEB'),
                     ),
                     DropdownMenuItem(
+                      value: 'TCM',
+                      child: Text('TCM'),
+                    ),
+                    DropdownMenuItem(
                       value: 'Other',
                       child: Text('Other'),
                     ),
@@ -2011,15 +2521,16 @@ class _editLocationBottomSheet extends State<editLocationBottomSheet> {
                       } else {
                         selectedOption = value!;
                         showOtherInput = false;
+                        updateHighlightedArea();
                       }
                     });
                   },
                 ),
                 const SizedBox(height: 10),
-                if (selectedOption != 'Main Building' && selectedOption!= 'IEB')
+                if (showOtherInput)
                   TextFormField(
                     controller: otherInputController,
-                    decoration: const InputDecoration(labelText: 'Other Option'),
+                    decoration: const InputDecoration(labelText: 'Building Name'),
                     validator: (value){
                       if(showOtherInput = true){
                         if(value == null || value.trim().isEmpty || value.trim().length > 50){
@@ -2034,26 +2545,6 @@ class _editLocationBottomSheet extends State<editLocationBottomSheet> {
                     },
                   ),
                 const SizedBox(height: 10),
-                TextFormField(
-                  controller: roomImageInputController,
-                  readOnly: true,
-                  decoration: const InputDecoration(labelText: 'Room image',icon: Icon(Icons.image)),
-                  onTap: _pickImage,
-                  onSaved: (value){
-                    // roomNameInputController.text = value!;
-                  },
-                ),
-                const SizedBox(height: 10),
-                _pickedImageFile!= null?
-                GFImageOverlay(
-                  height: 200,
-                  width: 300,
-                  shape: BoxShape.rectangle,
-                  borderRadius: const BorderRadius.all(Radius.circular(10)),
-                  image: FileImage(_pickedImageFile!),
-                ) :
-                const SizedBox(height: 10),
-                const SizedBox(height: 10),
                 ElevatedButton(
                   onPressed: () {
                     _submit();
@@ -2066,5 +2557,102 @@ class _editLocationBottomSheet extends State<editLocationBottomSheet> {
         ),
       ),
     );
+  }
+
+  void updateHighlightedArea() {
+    setState(() {
+      polygons.clear();
+      polygons.add(getPolygon(selectedOption));
+    });
+    fitBounds();
+  }
+
+  void fitBounds() {
+    LatLngBounds bounds = getPolygonBounds(polygons.first.points);
+    mapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50.0));
+  }
+
+  LatLngBounds getPolygonBounds(List<LatLng> polygonPoints) {
+    double minLat = polygonPoints.first.latitude;
+    double maxLat = polygonPoints.first.latitude;
+    double minLng = polygonPoints.first.longitude;
+    double maxLng = polygonPoints.first.longitude;
+
+    for (LatLng point in polygonPoints) {
+      if (point.latitude < minLat) {
+        minLat = point.latitude;
+      } else if (point.latitude > maxLat) {
+        maxLat = point.latitude;
+      }
+
+      if (point.longitude < minLng) {
+        minLng = point.longitude;
+      } else if (point.longitude > maxLng) {
+        maxLng = point.longitude;
+      }
+    }
+
+    return LatLngBounds(
+      southwest: LatLng(minLat, minLng),
+      northeast: LatLng(maxLat, maxLng),
+    );
+  }
+
+  Polygon getPolygon(String option) {
+    switch (option) {
+      case 'TCM':
+        return Polygon(
+          polygonId: PolygonId(option),
+          points: const [
+            LatLng(1.5331988034221635, 103.6828984846777),
+            LatLng(1.533319427323412, 103.68277217892413),
+            LatLng(1.533744429243514, 103.68315899029903),
+            LatLng(1.5336283146701633, 103.68329657335201),
+          ],
+          strokeWidth: 2,
+          strokeColor: Colors.red,
+          fillColor: Colors.red.withOpacity(0.3),
+        );
+      case 'IEB':
+        return Polygon(
+          polygonId: PolygonId(option),
+          points: const [
+            LatLng(1.5350882134102046, 103.68230715997088),
+            LatLng(1.5345876809556778, 103.68185606799385),
+            LatLng(1.5343982902666615, 103.68208838036203),
+            LatLng(1.5348920588136077, 103.68254849417856),
+          ],
+          strokeWidth: 2,
+          strokeColor: Colors.red,
+          fillColor: Colors.red.withOpacity(0.3),
+        );
+      case 'Main Building':
+        return Polygon(
+          polygonId: PolygonId(option),
+          points: const [
+            LatLng(1.5342624916037464, 103.68148554209574),
+            LatLng(1.5340989355078605, 103.68131253961893),
+            LatLng(1.5330693361767846, 103.68235860111629),
+            LatLng(1.5332395954729914, 103.68252758027968),
+          ],
+          strokeWidth: 2,
+          strokeColor: Colors.red,
+          fillColor: Colors.red.withOpacity(0.3),
+        );
+      default:
+      // Use default polygon for 'Other'
+        return Polygon(
+          polygonId: PolygonId('Other'),
+          points: [
+            LatLng(1.5331988034221635, 103.6828984846777),
+            LatLng(1.533319427323412, 103.68277217892413),
+            LatLng(1.533744429243514, 103.68315899029903),
+            LatLng(1.5336283146701633, 103.68329657335201),
+          ],
+          strokeWidth: 2,
+          strokeColor: Colors.red,
+          fillColor: Colors.red.withOpacity(0.3),
+        );
+    }
   }
 }

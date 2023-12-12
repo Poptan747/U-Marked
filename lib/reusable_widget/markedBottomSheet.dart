@@ -68,7 +68,7 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
         .doc(studentAttRecordID).get();
     var studentAttendanceData = studentAttRecordCollection.data() as Map<String, dynamic>;
 
-    if(studentAttendanceData['attendanceStatus'] != 1){
+    if(studentAttendanceData['attendanceStatus'] == 0){
       FirebaseFirestore.instance
           .collection('attendanceRecord').doc(widget.attendanceRecordID).collection('studentAttendanceList')
           .doc(studentAttRecordID).update({

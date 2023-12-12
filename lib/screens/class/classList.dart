@@ -143,7 +143,7 @@ class _myClassListState extends State<myClassList> {
         if(_nameMap[classID] == null || _nameMap[classID]!.isEmpty){
           _cardTitle[classID] = ('${_subjectIDMap[classID]!} ${_subjectNameMap[classID]!}')!;
         }else{
-          _cardTitle[classID] = ('${_nameMap[classID]!}\n${_subjectIDMap[classID]!}${_subjectNameMap[classID]!}')!;
+          _cardTitle[classID] = ('${_nameMap[classID]!}\n${_subjectIDMap[classID]!} ${_subjectNameMap[classID]!}')!;
         }
 
         if(_timeMap[classID]!.contains(',')){

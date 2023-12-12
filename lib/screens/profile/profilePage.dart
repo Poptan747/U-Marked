@@ -114,7 +114,6 @@ class _ProfilePageState extends State<ProfilePage> {
                           padding: const EdgeInsets.all(8.0),
                           child: Scrollbar(
                             radius: Radius.circular(20),
-                            isAlwaysShown: true,
                             scrollbarOrientation: ScrollbarOrientation.right,
                             child: SingleChildScrollView(
                               child: Column(

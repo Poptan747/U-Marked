@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dropdown_search/dropdown_search.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
 import 'package:intl/intl.dart';
@@ -230,84 +231,111 @@ class _addClassPageState extends State<addClassPage> {
     String lecturerHour;
     lecturerHour = classSession.toString();
 
-    //get location id
-    QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
-        .collection('locations')
-        .where('roomNo', isEqualTo: selectedLocation)
-        .get();
-    List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot.docs;
-    String locationID = '';
-    for (DocumentSnapshot<Map<String, dynamic>> document in documents) {
-      locationID = document.id;
-    }
-
-    List<String> lecturerIDs = _selectedLec.map((lecturer) => lecturer['lecturerID'] as String).toList();
-
-    //create class
-    FirebaseFirestore.instance.collection('classes').add({
-      'className' : classNameController.text,
-      'subjectID' : selectedSubject,
-      'locationID': locationID,
-      'lecturerID': lecturerIDs.toString().replaceAll('[', '').replaceAll(']', ''),
-      'lectureHour' : lecturerHour.replaceAll('[', '').replaceAll(']', ''),
-      'createAt': DateTime.now(),
-    }).then((value) async {
-      //storing class session time
-      for(var map in listOfMaps){
-        DocumentReference classDocument = FirebaseFirestore.instance.collection('classes').doc(value.id);
-        classDocument.collection('classSession').add({
-          'day': map['day'],
-          'weekType': map['weekType'],
-          'startFrom' : map['startFrom'],
-          'endAt' : map['endAt']
-        });
+    try {
+      //get location id
+      QuerySnapshot<
+          Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
+          .collection('locations')
+          .where('roomNo', isEqualTo: selectedLocation)
+          .get();
+      List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot
+          .docs;
+      String locationID = '';
+      for (DocumentSnapshot<Map<String, dynamic>> document in documents) {
+        locationID = document.id;
       }
-      //add class to lecturer
-      for (var lecturer in _selectedLec) {
-        String lecDocID = '';
-        QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
-            .collection('lecturers')
-            .where('lecturerID', isEqualTo: lecturer['lecturerID'])
-            .get();
-        List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot.docs;
-        for (DocumentSnapshot<Map<String, dynamic>> document in documents) {
-          lecDocID = document.id;
+
+      List<String> lecturerIDs = _selectedLec.map((
+          lecturer) => lecturer['lecturerID'] as String).toList();
+
+      //create class
+      FirebaseFirestore.instance.collection('classes').add({
+        'className': classNameController.text,
+        'subjectID': selectedSubject,
+        'locationID': locationID,
+        'lecturerID': lecturerIDs.toString().replaceAll('[', '').replaceAll(
+            ']', ''),
+        'lectureHour': lecturerHour.replaceAll('[', '').replaceAll(']', ''),
+        'createAt': DateTime.now(),
+      }).then((value) async {
+        //storing class session time
+        for (var map in listOfMaps) {
+          DocumentReference classDocument = FirebaseFirestore.instance
+              .collection('classes').doc(value.id);
+          classDocument.collection('classSession').add({
+            'day': map['day'],
+            'weekType': map['weekType'],
+            'startFrom': map['startFrom'],
+            'endAt': map['endAt']
+          });
         }
-        FirebaseFirestore.instance.collection('lecturers').doc(lecDocID).collection('classes').doc(value.id).set({
-          'classID' : value.id
-        });
-        FirebaseFirestore.instance.collection('classes').doc(value.id).collection('members').doc(lecDocID).set({
-          'uid' : lecDocID
-        });
-      }
-      //add class to student and members
-      for (var student in _selectedStudent) {
-        String studentDocID = '';
-        QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
-            .collection('students')
-            .where('studentID', isEqualTo: student['studentID'])
-            .get();
-        List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot.docs;
-        for (DocumentSnapshot<Map<String, dynamic>> document in documents) {
-          studentDocID = document.id;
+        //add class to lecturer
+        for (var lecturer in _selectedLec) {
+          String lecDocID = '';
+          QuerySnapshot<
+              Map<String, dynamic>> querySnapshot = await FirebaseFirestore
+              .instance
+              .collection('lecturers')
+              .where('lecturerID', isEqualTo: lecturer['lecturerID'])
+              .get();
+          List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot
+              .docs;
+          for (DocumentSnapshot<Map<String, dynamic>> document in documents) {
+            lecDocID = document.id;
+          }
+          FirebaseFirestore.instance.collection('lecturers').doc(lecDocID)
+              .collection('classes').doc(value.id)
+              .set({
+            'classID': value.id
+          });
+          FirebaseFirestore.instance.collection('classes').doc(value.id)
+              .collection('members').doc(lecDocID)
+              .set({
+            'uid': lecDocID
+          });
         }
-        FirebaseFirestore.instance.collection('classes').doc(value.id).collection('members').doc(studentDocID).set({
-          'uid' : studentDocID
-        });
-        FirebaseFirestore.instance.collection('students').doc(studentDocID).collection('classes').doc(value.id).set({
-          'classID' : value.id
-        });
-      }
-    });
+        //add class to student and members
+        for (var student in _selectedStudent) {
+          String studentDocID = '';
+          QuerySnapshot<
+              Map<String, dynamic>> querySnapshot = await FirebaseFirestore
+              .instance
+              .collection('students')
+              .where('studentID', isEqualTo: student['studentID'])
+              .get();
+          List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot
+              .docs;
+          for (DocumentSnapshot<Map<String, dynamic>> document in documents) {
+            studentDocID = document.id;
+          }
+          FirebaseFirestore.instance.collection('classes').doc(value.id)
+              .collection('members').doc(studentDocID)
+              .set({
+            'uid': studentDocID
+          });
+          FirebaseFirestore.instance.collection('students').doc(studentDocID)
+              .collection('classes').doc(value.id)
+              .set({
+            'classID': value.id
+          });
+        }
+      });
 
-    //check assigned lec
-    for (var lecturer in _selectedLec) {
-      print(lecturer['lecturerID']);
-    }
+      Navigator.pop(context);
 
-    //check student
-    for (var student in _selectedStudent) {
-      print(student['studentID']);
+      var snackBar = const SnackBar(
+        content: Text('Class Created!'),
+        behavior: SnackBarBehavior.floating,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+
+    }on FirebaseAuthException catch(error){
+      String? message = error.message;
+      var snackBar = SnackBar(
+        content: Text(message!),
+        behavior: SnackBarBehavior.floating,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
     }
   }
 
