@@ -29,9 +29,9 @@ class _homeState extends State<home> {
     var userCollection = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
     var data = await userCollection.data() as Map<String, dynamic>;
 
-    if(!data['userType'] == 3){
+    if(!(data['userType'] == 3)){
       while (!user.emailVerified) {
-        await Future.delayed(const Duration(seconds: 5));
+        await Future.delayed(const Duration(seconds: 10));
         await user.reload();
         user = FirebaseAuth.instance.currentUser!;
 
@@ -65,7 +65,9 @@ class _homeState extends State<home> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      body: pages[_currentIndex],
+      body: SafeArea(
+        child: pages[_currentIndex],
+      ),
       bottomNavigationBar: BottomNavigationBar(
           currentIndex: _currentIndex,
           items: const [

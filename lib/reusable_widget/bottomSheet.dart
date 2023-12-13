@@ -12,10 +12,12 @@ import 'package:intl/intl.dart';
 import 'package:location/location.dart';
 import 'package:u_marked/models/userModel.dart';
 import 'package:u_marked/reusable_widget/alertDialog.dart';
+import 'package:u_marked/screens/attendance/attendance.dart';
 
 class FormBottomSheet extends StatefulWidget {
-  const FormBottomSheet({Key? key, required this.classID}) : super(key: key);
+  const FormBottomSheet({Key? key, required this.classID, required this.isStudent}) : super(key: key);
   final String classID;
+  final bool isStudent;
 
   @override
   _FormBottomSheetState createState() => _FormBottomSheetState();
@@ -227,7 +229,7 @@ class _FormBottomSheetState extends State<FormBottomSheet> {
       });
 
       var snackBar = const SnackBar(
-        content: Text('Done'),
+        content: Text('Attendance Created!'),
         behavior: SnackBarBehavior.floating,
       );
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
@@ -238,6 +240,8 @@ class _FormBottomSheetState extends State<FormBottomSheet> {
       endAtTimeController.clear();
 
       Navigator.pop(context);
+      Navigator.pop(context);
+
     }on FirebaseFirestore catch(error){
       var snackBar = SnackBar(
         content: Text(error.toString()),
@@ -250,31 +254,47 @@ class _FormBottomSheetState extends State<FormBottomSheet> {
   loadClass(String classID, String recordID) async{
     // final studentCollection = await FirebaseFirestore.instance.collection('classes').doc(classID).collection('members').get();
 
-    String userDocID = '';
-    QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
-        .collection('classes').doc(classID).collection('members').get();
+    try {
 
-    List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot.docs;
-    for (DocumentSnapshot<Map<String, dynamic>> document in documents) {
-      userDocID = document.id;
-      var userCollection = await FirebaseFirestore.instance.collection('users').doc(userDocID).get();
-      var userData = await userCollection.data() as Map<String, dynamic>;
+      QuerySnapshot<
+          Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
+          .collection('classes').doc(classID).collection('members').get();
 
-      if(userData['userType'] == 1){
-        FirebaseFirestore.instance.collection('attendanceRecord').doc(recordID).collection('studentAttendanceList').add({
-          'attendanceRecordID' : recordID,
-          'studentUID' : userDocID,
-          'attendanceStatus' : 0, //0=pending 1=Present 2=Absent 3=Late 4=Leave early 5=sick
-          'attendanceTime' : '',
-          'notes': '',
-        }).then((value){
-          FirebaseFirestore.instance.collection('students').doc(userDocID).collection('attendanceRecord').doc(recordID).set({
-            'attendanceRecordID' : recordID,
-            'studentAttendanceRecordID' : value.id,
-            'createAt' : DateTime.now()
+      List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot
+          .docs;
+      for (DocumentSnapshot<Map<String, dynamic>> document in documents) {
+        String userDocID = '';
+        userDocID = document.id;
+        var userCollection = await FirebaseFirestore.instance.collection('users').doc(userDocID).get();
+        var userData = await userCollection.data() as Map<String, dynamic>;
+
+        if (userData['userType'] == 1) {
+          print(userData['userType']);
+          FirebaseFirestore.instance.collection('attendanceRecord').doc(recordID).collection('studentAttendanceList').add({
+            'attendanceRecordID': recordID,
+            'studentUID': userDocID,
+            'attendanceStatus': 0, //0=pending 1=Present 2=Absent 3=Late 4=Leave early 5=sick
+            'attendanceTime': '',
+            'notes': '',
+          }).then((value) {
+            print('THRU HERE STUDENT');
+            FirebaseFirestore.instance.collection('students').doc(userDocID).collection('attendanceRecord').doc(recordID).set({
+              'attendanceRecordID': recordID,
+              'studentAttendanceRecordID': value.id,
+              'createAt': DateTime.now()
+            }).then((value){
+              print('Student insert operation completed successfully');
+            });
           });
-        });
+        }
       }
+    }on FirebaseFirestore catch(error){
+      print(error);
+      var snackBar = SnackBar(
+        content: Text(error.toString()),
+        behavior: SnackBarBehavior.floating,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
     }
   }
 
@@ -1804,10 +1824,10 @@ class _editLecturerBottomSheet extends State<editLecturerBottomSheet> {
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _enteredLecturerIDController,
-                  decoration: const InputDecoration(labelText: 'Student ID',icon:Icon(Icons.badge)),
+                  decoration: const InputDecoration(labelText: 'Lecturer ID',icon:Icon(Icons.badge)),
                   validator: (value){
                     if(value == null || value.trim().isEmpty || value.trim().length > 50){
-                      return 'Please enter a valid student ID !';
+                      return 'Please enter a valid Lecturer ID !';
                     }
                   },
                   onSaved: (value){

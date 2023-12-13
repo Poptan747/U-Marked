@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:u_marked/reusable_widget/appBar.dart';
-import 'package:u_marked/reusable_widget/markedBottomSheet.dart';
+import 'package:u_marked/screens/attendance/markedBottomSheet.dart';
 import 'package:u_marked/screens/attendance/studentAttendanceList.dart';
 
 class AttendanceDashboard extends StatefulWidget {
@@ -203,7 +203,7 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> {
                           const Divider(),
                           Text('Time: $time'),
                           const Divider(),
-                          Text('Total Marked Student: $totalMarkedUsers / $totalAttendanceMember'),
+                          Text('Total Present Student: $totalMarkedUsers / $totalAttendanceMember'),
                         ],
                       ),
                     ),

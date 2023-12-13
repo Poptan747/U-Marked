@@ -146,12 +146,12 @@ class _homePageState extends State<homePage> {
                                       const Expanded(child: Text('My Attendance'))
                                     ],
                                   ),
-                                  Column(
-                                    children: [
-                                      IconButton(onPressed: (){}, icon: Icon(Icons.apps),color: Colors.blue.shade900),
-                                      const Expanded(child: Text('Quick-tools'))
-                                    ],
-                                  ),
+                                  // Column(
+                                  //   children: [
+                                  //     IconButton(onPressed: (){}, icon: Icon(Icons.apps),color: Colors.blue.shade900),
+                                  //     const Expanded(child: Text('Quick-tools'))
+                                  //   ],
+                                  // ),
                                 ],
                               ),
                             ),

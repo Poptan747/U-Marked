@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:u_marked/reusable_widget/appBar.dart';
 import 'package:u_marked/reusable_widget/bottomSheet.dart';
-import 'package:u_marked/reusable_widget/markedBottomSheet.dart';
 import 'package:u_marked/screens/attendance/attendanceDashboard.dart';
 
 class attendanceWidget extends StatefulWidget {
@@ -117,38 +116,47 @@ class _attendanceWidgetState extends State<attendanceWidget> {
         child: Container(
           height: MediaQuery.of(context).size.height,
           color: Colors.blue.shade100,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Colors.white,
-                  ),
-                  child: TableCalendar(
-                    firstDay: DateTime.utc(2010, 10, 16),
-                    lastDay: DateTime.utc(2030, 3, 14),
-                    focusedDay: today,
-                    selectedDayPredicate: (day) => isSameDay(day,today),
-                    onDaySelected: _onDaySelected,
-                  ),
+          child: Scrollbar(
+            thumbVisibility: true,
+            radius: Radius.circular(10),
+            thickness: 10,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.white,
+                      ),
+                      child: TableCalendar(
+                        firstDay: DateTime.utc(2010, 10, 16),
+                        lastDay: DateTime.utc(2030, 3, 14),
+                        focusedDay: today,
+                        selectedDayPredicate: (day) => isSameDay(day,today),
+                        onDaySelected: _onDaySelected,
+                      ),
+                    ),
+                    Divider(),
+                    Visibility(
+                      visible: !widget.isStudent,
+                      child: GFButton(
+                          shape: GFButtonShape.pills,
+                          elevation: 2,
+                          size: GFSize.LARGE,
+                          child: Text('Collect Attendance'),
+                          onPressed: (){
+                            widget.isStudent? null:_showBottomSheet(context,widget.classID);
+                          }),
+                    ),
+                    Container(
+                      child: _isLoading? const Center(child: CircularProgressIndicator(color: Colors.white,)) :
+                      _noData? Center(child: showEmptyClass) : _buildAttendanceListStream(),
+                    ),
+                  ],
                 ),
-                Divider(),
-                Visibility(
-                  visible: !widget.isStudent,
-                  child: GFButton(
-                      shape: GFButtonShape.pills,
-                      elevation: 2,
-                      size: GFSize.LARGE,
-                      child: Text('Collect Attendance'),
-                      onPressed: (){
-                        widget.isStudent? null:_showBottomSheet(context,widget.classID);
-                      }),
-                ),
-                _isLoading? const Center(child: CircularProgressIndicator(color: Colors.white,)) :
-                _noData? Center(child: showEmptyClass) : _buildAttendanceListStream()
-              ],
+              ),
             ),
           ),
         ),
@@ -156,53 +164,62 @@ class _attendanceWidgetState extends State<attendanceWidget> {
     );
   }
   Widget _buildAttendanceListStream() {
-    return Expanded(
-      child: StreamBuilder(
-        // initialData: {'isStudent': _isStudent, 'uID': _uID},
-        stream: FirebaseFirestore.instance.collection('classes').doc(widget.classID)
-            .collection('attendanceRecord').where('date', isEqualTo: formattedDate)
-            .snapshots(),
-        builder: (context, orderSnapshot) {
-          // print(orderSnapshot.data!.docs.length);
-          if (orderSnapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: Text('Loading....',style: TextStyle(color: Colors.white),));
-          }
+    return StreamBuilder(
+      // initialData: {'isStudent': _isStudent, 'uID': _uID},
+      stream: FirebaseFirestore.instance.collection('classes').doc(widget.classID)
+          .collection('attendanceRecord').where('date', isEqualTo: formattedDate)
+          .snapshots(),
+      builder: (context, orderSnapshot) {
+        // print(orderSnapshot.data!.docs.length);
+        if (orderSnapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: Text('Loading....',style: TextStyle(color: Colors.white),));
+        }
 
-          if(orderSnapshot.hasError){
-            print(orderSnapshot.error);
-          }
+        if(orderSnapshot.hasError){
+          print(orderSnapshot.error);
+        }
 
-          return ListView.builder(
-            itemCount: orderSnapshot.data!.docs.length,
-            itemBuilder: (context, index) {
-              var orderData = orderSnapshot.data!.docs[index].data() as Map<String, dynamic>;
-              var attendanceRecordID = orderData['attendanceRecordID'];
-              return GFListTile(
-                padding: EdgeInsets.all(20),
-                titleText: _dateMap[attendanceRecordID],
-                subTitleText:'From ${_startTimeMap[attendanceRecordID]} to ${_endTimeMap[attendanceRecordID]} \n${_totalMarkedMemberMap[attendanceRecordID]} / ${_totalMemberMap[attendanceRecordID]} marked',
-                color: Colors.white,
-                // icon: const Icon(Icons.keyboard_double_arrow_right),
-                onTap: (){
-                  if(widget.isStudent){
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => AttendanceDashboard(isStudent: widget.isStudent,attendanceRecordID: attendanceRecordID),
-                      ),
-                    );
-                  }else{
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => AttendanceDashboard(isStudent: widget.isStudent,attendanceRecordID: attendanceRecordID),
-                      ),
-                    );
-                  }
-                },
-              );
-            },
-          );
-        },
-      ),
+        return ListView.builder(
+          shrinkWrap: true,
+          itemCount: orderSnapshot.data!.docs.length,
+          itemBuilder: (context, index) {
+            var orderData = orderSnapshot.data!.docs[index].data() as Map<String, dynamic>;
+            var attendanceRecordID = orderData['attendanceRecordID'];
+            return GFListTile(
+              padding: EdgeInsets.all(20),
+              titleText: _dateMap[attendanceRecordID],
+              subTitleText:'From ${_startTimeMap[attendanceRecordID]} to ${_endTimeMap[attendanceRecordID]} \n${_totalMarkedMemberMap[attendanceRecordID]} / ${_totalMemberMap[attendanceRecordID]} Present',
+              color: Colors.white,
+              // icon: const Icon(Icons.keyboard_double_arrow_right),
+              onTap: (){
+                if(widget.isStudent){
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => AttendanceDashboard(isStudent: widget.isStudent,attendanceRecordID: attendanceRecordID),
+                    ),
+                  );
+                }else{
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => AttendanceDashboard(isStudent: widget.isStudent,attendanceRecordID: attendanceRecordID),
+                    ),
+                  );
+                }
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showBottomSheet(BuildContext context, String classID) {
+    showModalBottomSheet(
+      isScrollControlled: true,
+      context: context,
+      builder: (BuildContext context) {
+        return FormBottomSheet(classID:classID,isStudent:widget.isStudent); // Display the FormBottomSheet widget
+      },
     );
   }
 }
@@ -216,22 +233,4 @@ Text showEmptyClass = const Text(
     )
 );
 
-
-void _showBottomSheet(BuildContext context, String classID) {
-  showModalBottomSheet(
-    context: context,
-    builder: (BuildContext context) {
-      return FormBottomSheet(classID:classID); // Display the FormBottomSheet widget
-    },
-  );
-}
-
-void _showMarkedBottomSheet(BuildContext context, String RecordID) {
-  showModalBottomSheet(
-    context: context,
-    builder: (BuildContext context) {
-      return markedBottomSheet(attendanceRecordID: RecordID); // Display the FormBottomSheet widget
-    },
-  );
-}
 

@@ -102,6 +102,7 @@ class _adminHomeState extends State<adminHome> {
                   Container(
                     padding: const EdgeInsets.fromLTRB(10,10,10,10),
                     decoration: BoxDecoration(
+                      shape: BoxShape.rectangle,
                       borderRadius: BorderRadius.circular(6),
                       // color: Colors.blue.shade50,
                     ),
@@ -112,9 +113,9 @@ class _adminHomeState extends State<adminHome> {
                       crossAxisSpacing: 20,
                       mainAxisSpacing: 30,
                       children: [
-                        itemDashboard('User Management', Icons.supervised_user_circle, Colors.deepOrange, 1),
-                        itemDashboard('Class Management', Icons.school, Colors.green, 2),
-                        itemDashboard('Attendance Management', Icons.how_to_reg, Colors.purple, 3),
+                        itemDashboard('User Management', Icons.account_circle, Colors.deepOrange, 1),
+                        itemDashboard('Class Management', Icons.group, Colors.green, 2),
+                        itemDashboard('Subject Management', Icons.school, Colors.purple, 3),
                         itemDashboard('Location Management', Icons.location_city, Colors.brown, 4),
                       ],
                     ),
