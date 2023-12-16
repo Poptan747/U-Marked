@@ -2676,3 +2676,358 @@ class _editLocationBottomSheet extends State<editLocationBottomSheet> {
     }
   }
 }
+
+class createSubjectBottomSheet extends StatefulWidget {
+  const createSubjectBottomSheet({Key? key}) : super(key: key);
+
+  @override
+  State<createSubjectBottomSheet> createState() => _createSubjectBottomSheetState();
+}
+
+class _createSubjectBottomSheetState extends State<createSubjectBottomSheet> {
+
+  final _createSubjectForm = GlobalKey<FormState>();
+  final TextEditingController _subjectIDController = TextEditingController();
+  final TextEditingController _subjectNameController = TextEditingController();
+  String _errorMessage = '';
+  bool isLoading = false;
+
+  @override
+  void dispose() {
+    _subjectIDController.dispose();
+    _subjectNameController.dispose();
+    super.dispose();
+  }
+
+  void _submit() async{
+    setState(() {
+      _errorMessage = '';
+    });
+    final isValid = _createSubjectForm.currentState!.validate();
+    if(!isValid){
+      return;
+    }
+    _createSubjectForm.currentState!.save();
+
+    try{
+      setState(() {
+        isLoading = true;
+      });
+
+      String subjectID = _subjectIDController.text;
+      String subjectName = _subjectNameController.text;
+
+      QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
+          .collection('subjects')
+          .where('subjectID', isEqualTo: subjectID)
+          .get();
+      List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot.docs;
+
+      if(documents.isEmpty){
+        FirebaseFirestore.instance.collection('subjects').doc(subjectID).set({
+          'name' : subjectName.trim(),
+          'subjectID' : subjectID.trim(),
+        });
+        setState(() {
+          Navigator.pop(context);
+
+          var snackBar = const SnackBar(
+            content: Text('Subject Created!'),
+            behavior: SnackBarBehavior.floating,
+          );
+          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        });
+      }else{
+        setState(() {
+          isLoading = false;
+          _errorMessage = 'Subject Already Created!';
+          return;
+        });
+      }
+
+      setState(() {
+        isLoading = false;
+      });
+    }on FirebaseAuthException catch(error){
+      setState(() {
+        _errorMessage = error.message.toString();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Form(
+          key: _createSubjectForm,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                const Text(
+                  'New Subject',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                isLoading? const CircularProgressIndicator() : const SizedBox(),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _subjectIDController,
+                  decoration: const InputDecoration(labelText: 'Subject ID',icon:Icon(Icons.pin)),
+                  validator: (value){
+                    if(value == null || value.trim().isEmpty || value.trim().length > 50){
+                      return 'Please enter a valid Subject ID';
+                    }
+                  },
+                  onSaved: (value){
+                    _subjectIDController.text = value!;
+                  },
+                ),
+                _errorMessage.trim().isNotEmpty ? Text(_errorMessage, style: const TextStyle(color: Colors.red),) : const SizedBox(),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _subjectNameController,
+                  decoration: const InputDecoration(labelText: 'Subject Name',icon:Icon(Icons.school)),
+                  validator: (value){
+                    if(value == null || value.trim().isEmpty){
+                      return 'Please enter a valid Subject Name';
+                    }
+                  },
+                  onSaved: (value){
+                    _subjectNameController.text = value!;
+                  },
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Back'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        _submit();
+                      },
+                      child: const Text('Create New Subject'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class editSubjectBottomSheet extends StatefulWidget {
+  final String subjectID;
+  const editSubjectBottomSheet({Key? key,required this.subjectID}) : super(key: key);
+
+  @override
+  State<editSubjectBottomSheet> createState() => _editSubjectBottomSheetState();
+}
+
+class _editSubjectBottomSheetState extends State<editSubjectBottomSheet> {
+  final _editSubjectForm = GlobalKey<FormState>();
+  final TextEditingController _subjectIDController = TextEditingController();
+  final TextEditingController _subjectNameController = TextEditingController();
+  String _errorMessage = '';
+  bool isLoading = false;
+
+  @override
+  void dispose() {
+    _subjectIDController.dispose();
+    _subjectNameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadData();
+  }
+
+  loadData() async{
+    try {
+      String subjectID = widget.subjectID;
+      var userCollection = await FirebaseFirestore.instance.collection('subjects')
+          .doc(subjectID)
+          .get();
+      var data = await userCollection.data() as Map<String, dynamic>;
+
+      setState(() {
+        _subjectNameController.text = data['name'];
+        _subjectIDController.text = data['subjectID'];
+      });
+    } on FirebaseException catch(e){
+      print(e.message);
+    }
+  }
+
+  _submit() async{
+    bool hasError = false;
+    setState(() {
+      _errorMessage = '';
+    });
+    final isValid = _editSubjectForm.currentState!.validate();
+    if(!isValid){
+      return;
+    }
+    _editSubjectForm.currentState!.save();
+
+    try{
+      setState(() {
+        isLoading = true;
+      });
+
+
+      String enteredSubjectID = _subjectIDController.text;
+      String enteredSubjectName = _subjectNameController.text;
+
+      QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
+          .collection('subjects')
+          .where('subjectID', isEqualTo: enteredSubjectID)
+          .get();
+      List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot.docs;
+
+      if(documents.isEmpty){
+        hasError = false;
+      }else{
+        if(enteredSubjectID.trim() == widget.subjectID){
+          hasError = false;
+        }else{
+          hasError = true;
+        }
+      }
+
+      if(!hasError){
+        FirebaseFirestore.instance.collection('subjects').doc(widget.subjectID).delete();
+        FirebaseFirestore.instance.collection('subjects').doc(enteredSubjectID).set({
+          'name' : enteredSubjectName.trim(),
+          'subjectID' : enteredSubjectID.trim(),
+        }).then((value) async {
+          QuerySnapshot<Map<String, dynamic>> classQuerySnapshot = await FirebaseFirestore.instance
+              .collection('classes')
+              .where('subjectID', isEqualTo: widget.subjectID)
+              .get();
+          List<DocumentSnapshot<Map<String, dynamic>>> classDocuments = classQuerySnapshot.docs;
+          if(classDocuments.isNotEmpty){
+            for (DocumentSnapshot<Map<String, dynamic>> document in documents){
+              String classID = document.id;
+              FirebaseFirestore.instance.collection('classes').doc(classID).update({
+                'subjectID' : enteredSubjectID.trim(),
+              });
+            }
+          }
+        });
+
+        setState(() {
+          Navigator.pop(context);
+          var snackBar = const SnackBar(
+            content: Text('Subject Information Changed!'),
+            behavior: SnackBarBehavior.floating,
+          );
+          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        });
+      }else{
+        setState(() {
+          isLoading = false;
+          _errorMessage = 'Subject Already Created!';
+          return;
+        });
+      }
+
+      setState(() {
+        isLoading = false;
+      });
+    }on FirebaseAuthException catch(error){
+      setState(() {
+        isLoading = false;
+        _errorMessage = error.message.toString();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Form(
+          key: _editSubjectForm,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                const Text(
+                  'Modify Subject Information',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                isLoading? const CircularProgressIndicator() : const SizedBox(),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _subjectIDController,
+                  decoration: const InputDecoration(labelText: 'Subject ID',icon:Icon(Icons.badge)),
+                  validator: (value){
+                    if(value == null || value.trim().isEmpty || value.trim().length > 50){
+                      return 'Please enter a valid Subject ID !';
+                    }
+                  },
+                  onSaved: (value){
+                    _subjectIDController.text = value!;
+                  },
+                ),
+                _errorMessage.trim().isNotEmpty ? Text(_errorMessage, style: const TextStyle(color: Colors.red),) : const SizedBox(),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _subjectNameController,
+                  decoration: const InputDecoration(labelText: 'Subject Name',icon:Icon(Icons.groups_2)),
+                  validator: (value){
+                    if(value == null || value.trim().isEmpty){
+                      return 'Please enter a valid Subject Name !';
+                    }
+                  },
+                  onSaved: (value){
+                    _subjectNameController.text = value!;
+                  },
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Back'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        _submit();
+                      },
+                      child: const Text('Confirm'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

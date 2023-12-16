@@ -82,6 +82,16 @@ GFAppBar attendanceDashBoardAppBar = GFAppBar(
   title: const Text("Attendance Dashboard"),
 );
 
+GFAppBar attendanceSessionAppBar = GFAppBar(
+  centerTitle: true,
+  elevation: 0,
+  // automaticallyImplyLeading: false,
+  flexibleSpace: Container(
+    decoration: myClassAppBarBackgroundDecoration,
+  ),
+  title: const Text("Attendance Session"),
+);
+
 GFAppBar chatroomAppBar(String userName) {
   return GFAppBar(
     centerTitle: true,
@@ -224,6 +234,42 @@ GFAppBar locationListAppBar(BuildContext context) {
               return Padding(
                 padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
                 child: createLocationBottomSheet(),
+              );
+            },
+          );
+        },
+        type: GFButtonType.transparent,
+      )
+    ],
+  );
+}
+
+GFAppBar subjectListAppBar(BuildContext context) {
+  return GFAppBar(
+    centerTitle: true,
+    elevation: 0,
+    // automaticallyImplyLeading: false,
+    flexibleSpace: Container(
+      decoration: myClassAppBarBackgroundDecoration,
+    ),
+    title: const Text("Subject List"),
+    actions: [
+      GFIconButton(
+        icon: const Icon(
+          Icons.add_rounded,
+          color: Colors.white,
+        ),
+        onPressed: () {
+          showModalBottomSheet(
+            isScrollControlled: true,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            context: context,
+            builder: (BuildContext context) {
+              return Padding(
+                padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                child: createSubjectBottomSheet(),
               );
             },
           );

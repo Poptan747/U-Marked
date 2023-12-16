@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
 import 'package:u_marked/reusable_widget/appBar.dart';
+import 'package:u_marked/screens/attendance/viewStudentAttendanceSession.dart';
 
 class studentAttendanceList extends StatefulWidget {
   const studentAttendanceList({Key? key,required this.isStudent, required this.attendanceRecordID}) : super(key: key);
@@ -76,10 +77,10 @@ class _studentAttendanceListState extends State<studentAttendanceList> {
               _statusMap[studentAttRecordID] = 'Leave Early';
               break;
             case 5:
-              _statusMap[studentAttRecordID] = 'Late';
+              _statusMap[studentAttRecordID] = 'Sick Leave';
               break;
             default:
-              _statusMap[studentAttRecordID] = 'Sick';
+              _statusMap[studentAttRecordID] = 'Absent';
               break;
           }
           _noData = false;
@@ -147,12 +148,21 @@ Widget _buildMemberListStream() {
           String status = _statusMap[stuAttRecord] ?? 'Unknown Status';
           return Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Card(
-              child: ListTile(
-                leading: getIconForAttendanceStatus(status),
-                title: Text(name),
-                subtitle: Text(studentID),
-                trailing: Text(status),
+            child: GestureDetector(
+              onTap: (){
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ViewStudentAttendanceSession(attRecordID: recordID, studentAttListID: stuAttRecord),
+                  ),
+                );
+              },
+              child: Card(
+                child: ListTile(
+                  leading: getIconForAttendanceStatus(status),
+                  title: Text(name),
+                  subtitle: Text(studentID),
+                  trailing: Text(status),
+                ),
               ),
             ),
           );

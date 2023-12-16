@@ -37,10 +37,10 @@ class _homeState extends State<home> {
 
         if (user.emailVerified) {
           await updateFirestoreData(user);
-          print('Email verified. Updating Firestore data.');
+          // print('Email verified. Updating Firestore data.');
           break;
         } else {
-          print('Email not verified. Waiting...');
+          // print('Email not verified. Waiting...');
         }
       }
     }

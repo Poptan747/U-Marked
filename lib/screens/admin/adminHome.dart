@@ -4,9 +4,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:u_marked/reusable_widget/alertDialog.dart';
 import 'package:u_marked/reusable_widget/gradientBackground.dart';
-import 'package:u_marked/screens/admin/attendanceManagement/index.dart';
 import 'package:u_marked/screens/admin/classManagement/classList.dart';
 import 'package:u_marked/screens/admin/locationManagement/locationList.dart';
+import 'package:u_marked/screens/admin/subjectManagement/subjectList.dart';
 import 'package:u_marked/screens/admin/userManagement/list.dart';
 
 class adminHome extends StatefulWidget {
@@ -130,8 +130,8 @@ class _adminHomeState extends State<adminHome> {
   }
 
   itemDashboard(String title, IconData iconData, Color background , int index) =>
-      ElevatedButton(
-          onPressed: (){
+      GestureDetector(
+          onTap: (){
             switch (index) {
               case 1:
                 Navigator.of(context).push(
@@ -150,33 +150,47 @@ class _adminHomeState extends State<adminHome> {
               case 3 :
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => googeMapTest(),
+                    builder: (context) => subjectListPage(),
                   ),
                 );
                 break;
               case 4 :
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => locationList(),
-                ),
-              );
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => locationList(),
+                  ),
+                );
                 break;
             }
           },
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: background,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(iconData, color: Colors.white)
-              ),
-              const SizedBox(height: 8),
-              Text(title.toUpperCase(), style: const TextStyle(fontSize: 16), textAlign: TextAlign.center,)
-            ],
+          child: Container(
+            decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                      offset: const Offset(0, 5),
+                      color: Theme.of(context).primaryColor.withOpacity(.2),
+                      spreadRadius: 2,
+                      blurRadius: 5
+                  )
+                ]
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: background,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(iconData, color: Colors.white)
+                ),
+                const SizedBox(height: 8),
+                Text(title.toUpperCase(), style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center,)
+              ],
+            ),
           )
       );
 }

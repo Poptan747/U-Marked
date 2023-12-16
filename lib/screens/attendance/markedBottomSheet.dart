@@ -9,7 +9,8 @@ import 'package:intl/intl.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as map_tool;
 
 class markedBottomSheet extends StatefulWidget {
-  const markedBottomSheet({Key? key, required this.attendanceRecordID}) : super(key: key);
+  const markedBottomSheet({Key? key, required this.attendanceRecordID})
+      : super(key: key);
   final String attendanceRecordID;
 
   @override
@@ -19,9 +20,9 @@ class markedBottomSheet extends StatefulWidget {
 final _form = GlobalKey<FormState>();
 
 class _markedBottomSheetState extends State<markedBottomSheet> {
-  var _date ='';
-  var _startTime ='';
-  var _endTime ='';
+  var _date = '';
+  var _startTime = '';
+  var _endTime = '';
   String geofencingType = '';
   TextEditingController dateController = TextEditingController();
   TextEditingController withinController = TextEditingController();
@@ -31,7 +32,7 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
   bool cameraReady = false;
   bool isInSelectedArea = false;
   late GoogleMapController mapController;
-  late Position currentPosition ;
+  late Position currentPosition;
   late LatLng targetLocation;
   late LatLng cameraLocation;
   late StreamSubscription<Position> _positionStreamSubscription;
@@ -55,9 +56,9 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
   List<LatLng> polygonPoints = [];
   late List<TextEditingController> controllers;
   late List<bool> switchValues;
-  late List<bool> isSwitchDisabled ;
+  late List<bool> isSwitchDisabled;
 
-  int hoursDifference = 0 ;
+  int hoursDifference = 0;
   DateTime startTime = DateTime.now();
   DateTime endTime = DateTime.now();
   List<Widget> textFields = [];
@@ -67,8 +68,16 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
     super.initState();
     loadData();
     currentPosition = Position(
-        longitude: 0, latitude: 0, timestamp: DateTime.now(), accuracy: 1, altitude: 1, altitudeAccuracy: 1, heading: 1, headingAccuracy: 1, speed: 1, speedAccuracy: 1
-    );
+        longitude: 0,
+        latitude: 0,
+        timestamp: DateTime.now(),
+        accuracy: 1,
+        altitude: 1,
+        altitudeAccuracy: 1,
+        heading: 1,
+        headingAccuracy: 1,
+        speed: 1,
+        speedAccuracy: 1);
     _initGeolocator();
   }
 
@@ -81,8 +90,8 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
     super.dispose();
   }
 
-  loadData() async{
-    var studentAttRecordID='';
+  loadData() async {
+    var studentAttRecordID = '';
     try {
       var attendanceCollection = await FirebaseFirestore.instance
           .collection('attendanceRecord')
@@ -108,11 +117,13 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
               break;
           }
           if (!isClose) {
-            List<GeoPoint> newPoints = List<GeoPoint>.from(attendanceData['polygons']);
+            List<GeoPoint> newPoints =
+                List<GeoPoint>.from(attendanceData['polygons']);
             Polygon newPolygon = Polygon(
               polygonId: PolygonId(attendanceData['geofencingType']),
-              points: newPoints.map((point) =>
-                  LatLng(point.latitude, point.longitude)).toList(),
+              points: newPoints
+                  .map((point) => LatLng(point.latitude, point.longitude))
+                  .toList(),
               strokeWidth: 2,
               strokeColor: Colors.red,
               fillColor: Colors.red.withOpacity(0.3),
@@ -141,23 +152,87 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
           startTime = convertStringToDateTime(attendanceData['startAt']);
           endTime = convertStringToDateTime(attendanceData['endAt']);
           hoursDifference = calculateHoursDifference(startTime, endTime);
-          if(hoursDifference < 1){
 
-          }else{
-            List<bool> switchValues = List.generate(hoursDifference, (index) => false);
-            List<bool> isSwitchDisabled = List.generate(hoursDifference, (index) => false);
-            List<DateTime> fiedStartTime = List.generate(hoursDifference, (index) => DateTime.now());
-            List<DateTime> fiedEndTime = List.generate(hoursDifference, (index) => DateTime.now());
-            controllers = List.generate(hoursDifference, (index) => TextEditingController());
+          if (hoursDifference <= 1) {
+            List<bool> switchValues = List.generate(1, (index) => false);
+            List<bool> isSwitchDisabled = List.generate(1, (index) => false);
+            List<DateTime> fiedStartTime =
+                List.generate(1, (index) => DateTime.now());
+            List<DateTime> fiedEndTime =
+                List.generate(1, (index) => DateTime.now());
+            controllers = List.generate(1, (index) => TextEditingController());
+
+            textFields.add(
+              StatefulBuilder(
+                builder: (BuildContext context, StateSetter setState) {
+                  return Column(
+                    children: [
+                      const Divider(),
+                      TextFormField(
+                        readOnly: true,
+                        controller: controllers[0],
+                        decoration: const InputDecoration(
+                          labelText: 'Attendance Session',
+                          icon: Icon(Icons.access_time_outlined),
+                          border: InputBorder.none,
+                        ),
+                      ),
+                      ListTile(
+                        title: const Text('Present'),
+                        trailing: Switch(
+                          value: switchValues[0],
+                          onChanged: isSwitchDisabled[0] || !isInSelectedArea
+                              ? null // Disable the switch isSwitchDisabled[i] && !isInSelectedArea
+                              : (value) {
+                                  setState(() {
+                                    switchValues[0] = value;
+                                  });
+                                },
+                        ),
+                      ),
+                      ElevatedButton(
+                          onPressed: isSwitchDisabled[0] || !isInSelectedArea
+                              ? null
+                              : () {
+                                  _submit(0, fiedStartTime[0], fiedEndTime[0],
+                                      switchValues[0]);
+                                },
+                          child: const Text('Capture Attendance'))
+                    ],
+                  );
+                },
+              ),
+            );
+
+            fiedStartTime[0] = startTime;
+            fiedEndTime[0] = endTime;
+            controllers[0].text =
+                '${DateFormat('h:mm a').format(startTime)} - ${DateFormat('h:mm a').format(endTime)}';
+          }
+          else {
+            List<bool> switchValues =
+                List.generate(hoursDifference, (index) => false);
+            List<bool> isSwitchDisabled =
+                List.generate(hoursDifference, (index) => false);
+            List<DateTime> fiedStartTime =
+                List.generate(hoursDifference, (index) => DateTime.now());
+            List<DateTime> fiedEndTime =
+                List.generate(hoursDifference, (index) => DateTime.now());
+            controllers = List.generate(
+                hoursDifference, (index) => TextEditingController());
             String remainingTime = '';
             String formattedEndTime = '';
             String formattedRemTime = '';
 
             for (int i = 0; i < hoursDifference; i++) {
-              DateTime endTimeForTextField = startTime.add(Duration(hours: i + 1));
-              formattedEndTime = DateFormat('h:mm a').format(endTimeForTextField);
-              DateTime remainTimeForTextField = startTime.add(Duration(hours: i));
-              formattedRemTime = DateFormat('h:mm a').format(remainTimeForTextField);
+              DateTime endTimeForTextField =
+                  startTime.add(Duration(hours: i + 1));
+              formattedEndTime =
+                  DateFormat('h:mm a').format(endTimeForTextField);
+              DateTime remainTimeForTextField =
+                  startTime.add(Duration(hours: i));
+              formattedRemTime =
+                  DateFormat('h:mm a').format(remainTimeForTextField);
 
               textFields.add(
                 StatefulBuilder(
@@ -178,22 +253,23 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
                           title: const Text('Present'),
                           trailing: Switch(
                             value: switchValues[i],
-                            onChanged: isSwitchDisabled[i] && !isInSelectedArea
+                            onChanged: isSwitchDisabled[i] || !isInSelectedArea
                                 ? null // Disable the switch isSwitchDisabled[i] && !isInSelectedArea
                                 : (value) {
-                              setState(() {
-                                switchValues[i] = value;
-                              });
-                            },
+                                    setState(() {
+                                      switchValues[i] = value;
+                                    });
+                                  },
                           ),
                         ),
                         ElevatedButton(
-                            onPressed: isSwitchDisabled[i] && !isInSelectedArea ?
-                            null : (){
-                              _submit(i,fiedStartTime[i],fiedEndTime[i], switchValues[i]);
-                            },
-                            child: const Text('Capture Attendance')
-                        )
+                            onPressed: isSwitchDisabled[i] || !isInSelectedArea
+                                ? null
+                                : () {
+                                    _submit(i, fiedStartTime[i], fiedEndTime[i],
+                                        switchValues[i]);
+                                  },
+                            child: const Text('Capture Attendance'))
                       ],
                     );
                   },
@@ -206,25 +282,33 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
               if (i == 0) {
                 fiedStartTime[i] = startTime;
                 fiedEndTime[i] = startTime.add(Duration(hours: 1));
-                isSwitchDisabled[i] = currentTime.isBefore(startTime) || currentTime.isAfter(startTime.add(Duration(hours: 1)));
-                controllers[i].text = '${DateFormat('h:mm a').format(startTime)} - $formattedEndTime';
+                isSwitchDisabled[i] = currentTime.isBefore(startTime) ||
+                    currentTime.isAfter(startTime.add(Duration(hours: 1)));
+                controllers[i].text =
+                    '${DateFormat('h:mm a').format(startTime)} - $formattedEndTime';
               } else if (i == hoursDifference - 1) {
                 // Last loop
-                if(hoursDifference == 2){
+                if (hoursDifference == 2) {
                   fiedStartTime[i] = remainTimeForTextField;
                   fiedEndTime[i] = endTimeForTextField;
-                  isSwitchDisabled[i] = currentTime.isBefore(remainTimeForTextField) || currentTime.isAfter(endTimeForTextField);
+                  isSwitchDisabled[i] =
+                      currentTime.isBefore(remainTimeForTextField) ||
+                          currentTime.isAfter(endTimeForTextField);
                   controllers[i].text = '$formattedRemTime - $formattedEndTime';
-                }else{
+                } else {
                   fiedStartTime[i] = endTimeForTextField;
                   fiedEndTime[i] = endTimeForTextField;
-                  isSwitchDisabled[i] = currentTime.isBefore(endTimeForTextField) || currentTime.isAfter(endTimeForTextField);
+                  isSwitchDisabled[i] =
+                      currentTime.isBefore(endTimeForTextField) ||
+                          currentTime.isAfter(endTimeForTextField);
                   controllers[i].text = '$remainingTime - $formattedEndTime';
                 }
               } else {
                 fiedStartTime[i] = remainTimeForTextField;
                 fiedEndTime[i] = endTimeForTextField;
-                isSwitchDisabled[i] = currentTime.isBefore(remainTimeForTextField) || currentTime.isAfter(endTimeForTextField);
+                isSwitchDisabled[i] =
+                    currentTime.isBefore(remainTimeForTextField) ||
+                        currentTime.isAfter(endTimeForTextField);
                 controllers[i].text = '$formattedRemTime - $formattedEndTime';
                 remainingTime = formattedEndTime;
               }
@@ -232,7 +316,7 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
           }
         });
       }
-    }on FirebaseFirestore catch(error){
+    } on FirebaseFirestore catch (error) {
       print(error);
       var snackBar = SnackBar(
         content: Text(error.toString()),
@@ -247,8 +331,8 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
     DateTime parsedTime = DateFormat.jm().parse(timeString);
 
     // Create a DateTime object with the current date and the parsed time
-    DateTime dateTime = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day,
-        parsedTime.hour, parsedTime.minute);
+    DateTime dateTime = DateTime(DateTime.now().year, DateTime.now().month,
+        DateTime.now().day, parsedTime.hour, parsedTime.minute);
 
     return dateTime;
   }
@@ -267,18 +351,18 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
       distanceFilter: 1,
     );
     _positionStreamSubscription =
-        Geolocator.getPositionStream(locationSettings : locationSettings)
-            .listen((Position position) {
-          setState(() {
-            cameraLocation = LatLng(position.latitude, position.longitude);
-            cameraReady = true;
-            checkUpdatedLocation(LatLng(position.latitude, position.longitude));
-            currentPosition = position;
-          });
-          print(currentPosition);
-        }, onError: (dynamic error) {
-          print('Location error: $error');
-        });
+        Geolocator.getPositionStream(locationSettings: locationSettings).listen(
+            (Position position) {
+      setState(() {
+        cameraLocation = LatLng(position.latitude, position.longitude);
+        cameraReady = true;
+        checkUpdatedLocation(LatLng(position.latitude, position.longitude));
+        currentPosition = position;
+      });
+      print(currentPosition);
+    }, onError: (dynamic error) {
+      print('Location error: $error');
+    });
     print(currentPosition);
   }
 
@@ -318,52 +402,63 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
     // continue accessing the position of the device.
   }
 
-  void checkUpdatedLocation(LatLng pointLatLng){
-    var currentLocationPointFromToolkit = map_tool.LatLng(pointLatLng.latitude,pointLatLng.longitude);
+  void checkUpdatedLocation(LatLng pointLatLng) {
+    var currentLocationPointFromToolkit =
+        map_tool.LatLng(pointLatLng.latitude, pointLatLng.longitude);
 
     setState(() {
-     if(isClose){
-       var targetArea = map_tool.LatLng(targetLocation.latitude,targetLocation.longitude);
-       if(map_tool.SphericalUtil.computeDistanceBetween(currentLocationPointFromToolkit, targetArea) < 10){
-         // in 10 meters
-         isInSelectedArea = true;
-       }else{
-         isInSelectedArea = false;
-       }
-     }else{
-       List<map_tool.LatLng> maptoolList = [];
-       for (var polygon in polygonPoints) {
-         maptoolList.add(map_tool.LatLng(polygon.latitude,polygon.longitude));
-       }
-       isInSelectedArea = map_tool.PolygonUtil.containsLocation(
-           currentLocationPointFromToolkit,
-           maptoolList , false);
-     }
+      if (isClose) {
+        var targetArea =
+            map_tool.LatLng(targetLocation.latitude, targetLocation.longitude);
+        if (map_tool.SphericalUtil.computeDistanceBetween(
+                currentLocationPointFromToolkit, targetArea) <
+            10) {
+          // in 10 meters
+          isInSelectedArea = true;
+        } else {
+          isInSelectedArea = false;
+        }
+      } else {
+        List<map_tool.LatLng> maptoolList = [];
+        for (var polygon in polygonPoints) {
+          maptoolList.add(map_tool.LatLng(polygon.latitude, polygon.longitude));
+        }
+        isInSelectedArea = map_tool.PolygonUtil.containsLocation(
+            currentLocationPointFromToolkit, maptoolList, false);
+      }
 
-     if(isInSelectedArea){
-       withinController.text = 'Within Area';
-     }else{
-       withinController.text = 'Not Within Area';
-     }
-     print(isInSelectedArea);
+      if (isInSelectedArea) {
+        withinController.text = 'Within Area';
+      } else {
+        withinController.text = 'Not Within Area';
+      }
+      print(isInSelectedArea);
     });
   }
 
-  void _submit(int index, DateTime fieldStartTime, DateTime fieldEndTime, bool switchValues) async{
+  void _submit(int index, DateTime fieldStartTime, DateTime fieldEndTime,
+      bool switchValues) async {
     String recordID = widget.attendanceRecordID;
     String userID = FirebaseAuth.instance.currentUser!.uid;
     String studentAttListID = '';
 
-    try{
-      var recordCollection = await FirebaseFirestore.instance.collection('attendanceRecord').doc(recordID).get();
-      var recordData = await recordCollection.data() as Map<String, dynamic>;
-      QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
-          .collection('attendanceRecord').doc(recordID).collection('studentAttendanceList')
-          .where('studentUID', isEqualTo: userID)
+    try {
+      var recordCollection = await FirebaseFirestore.instance
+          .collection('attendanceRecord')
+          .doc(recordID)
           .get();
-      List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot.docs;
-      if(documents.isNotEmpty){
-        for (DocumentSnapshot<Map<String, dynamic>> document in documents){
+      var recordData = await recordCollection.data() as Map<String, dynamic>;
+      QuerySnapshot<Map<String, dynamic>> querySnapshot =
+          await FirebaseFirestore.instance
+              .collection('attendanceRecord')
+              .doc(recordID)
+              .collection('studentAttendanceList')
+              .where('studentUID', isEqualTo: userID)
+              .get();
+      List<DocumentSnapshot<Map<String, dynamic>>> documents =
+          querySnapshot.docs;
+      if (documents.isNotEmpty) {
+        for (DocumentSnapshot<Map<String, dynamic>> document in documents) {
           studentAttListID = document.id;
         }
 
@@ -371,40 +466,68 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
         DateTime endTime = convertStringToDateTime(recordData['endAt']);
         bool studentAttendanceSessionStatus = switchValues;
         String attendanceSession = controllers[index].text;
-        int hoursDifferenceSubmit = calculateHoursDifference(startTime, endTime);
+        int hoursDifferenceSubmit =
+            calculateHoursDifference(startTime, endTime);
 
         //0=pending 1=Present 2=Absent 3=Late 4=Leave early 5=sick
-        if(index == 0){
+        if (index == 0) {
           //first
           //check if already captured
-          QuerySnapshot<Map<String, dynamic>> attListQuerySnapshot = await FirebaseFirestore.instance
-              .collection('attendanceRecord').doc(recordID).collection('studentAttendanceList').doc(studentAttListID)
-              .collection('studentAttendanceSession')
-              .where('startAt', isEqualTo: DateFormat.jm().format(fieldStartTime))
-              .get();
-          List<DocumentSnapshot<Map<String, dynamic>>> attListDocuments = attListQuerySnapshot.docs;
+          QuerySnapshot<Map<String, dynamic>> attListQuerySnapshot =
+              await FirebaseFirestore.instance
+                  .collection('attendanceRecord')
+                  .doc(recordID)
+                  .collection('studentAttendanceList')
+                  .doc(studentAttListID)
+                  .collection('studentAttendanceSession')
+                  .where('startAt',
+                      isEqualTo: DateFormat.jm().format(fieldStartTime))
+                  .get();
+          List<DocumentSnapshot<Map<String, dynamic>>> attListDocuments =
+              attListQuerySnapshot.docs;
           bool docFounded = false;
-          if(attListDocuments.isEmpty){
+          if (attListDocuments.isEmpty) {
             docFounded = false;
-          }else{
+          } else {
             docFounded = true;
           }
 
-          if(!docFounded){
-            if(fieldStartTime == startTime){
+          if (!docFounded) {
+            if (fieldStartTime == startTime) {
               //Present
-              FirebaseFirestore.instance.collection('attendanceRecord').doc(recordID)
-                  .collection('studentAttendanceList').doc(studentAttListID).collection('studentAttendanceSession').add({
-                'recordID' : recordID,
+              FirebaseFirestore.instance
+                  .collection('attendanceRecord')
+                  .doc(recordID)
+                  .collection('studentAttendanceList')
+                  .doc(studentAttListID)
+                  .collection('studentAttendanceSession')
+                  .add({
+                'recordID': recordID,
                 'studentID': userID,
-                'attendanceSession' : attendanceSession,
-                'startAt' : DateFormat.jm().format(startTime),
-                'endAt' : DateFormat.jm().format(endTime),
-                'attendanceStatus' : studentAttendanceSessionStatus ? 'Present' : 'Absent',
-                'createAt' : DateTime.now()
+                'attendanceSession': attendanceSession,
+                'startAt': DateFormat.jm().format(startTime),
+                'endAt': DateFormat.jm().format(endTime),
+                'attendanceStatus':
+                    studentAttendanceSessionStatus ? 'Present' : 'Absent',
+                'createAt': DateTime.now()
+              }).then((value) {
+                if(hoursDifferenceSubmit <= 1){
+                  FirebaseFirestore.instance
+                      .collection('attendanceRecord')
+                      .doc(recordID)
+                      .collection('studentAttendanceList')
+                      .doc(studentAttListID)
+                      .update({'attendanceStatus': 1});
+                  FirebaseFirestore.instance
+                      .collection('attendanceRecord')
+                      .doc(recordID)
+                      .update({
+                    'markedUser': recordData['markedUser'] + 1,
+                  });
+                }
               });
             }
-          }else{
+          } else {
             setState(() {
               var snackBar = const SnackBar(
                 content: Text('Attendance Session Already Saved!'),
@@ -414,70 +537,98 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
             });
             return;
           }
-
-        }else if(index == hoursDifferenceSubmit - 1){
-
-          QuerySnapshot<Map<String, dynamic>> checkAttListQuerySnapshot = await FirebaseFirestore.instance
-              .collection('attendanceRecord').doc(recordID).collection('studentAttendanceList').doc(studentAttListID)
-              .collection('studentAttendanceSession')
-              .where('endAt', isEqualTo: DateFormat.jm().format(fieldEndTime))
-              .get();
-          List<DocumentSnapshot<Map<String, dynamic>>> checkAttListDocuments = checkAttListQuerySnapshot.docs;
+        } else if (index == hoursDifferenceSubmit - 1) {
+          QuerySnapshot<Map<String, dynamic>> checkAttListQuerySnapshot =
+              await FirebaseFirestore.instance
+                  .collection('attendanceRecord')
+                  .doc(recordID)
+                  .collection('studentAttendanceList')
+                  .doc(studentAttListID)
+                  .collection('studentAttendanceSession')
+                  .where('endAt',
+                      isEqualTo: DateFormat.jm().format(fieldEndTime))
+                  .get();
+          List<DocumentSnapshot<Map<String, dynamic>>> checkAttListDocuments =
+              checkAttListQuerySnapshot.docs;
           bool docFounded = false;
-          if(checkAttListDocuments.isEmpty){
+          if (checkAttListDocuments.isEmpty) {
             docFounded = false;
-          }else{
+          } else {
             docFounded = true;
           }
           //last
-          if(!docFounded){
-            if(fieldEndTime == endTime){
+          if (!docFounded) {
+            if (fieldEndTime == endTime) {
               //check previous record
-              QuerySnapshot<Map<String, dynamic>> attListQuerySnapshot = await FirebaseFirestore.instance
-                  .collection('attendanceRecord').doc(recordID).collection('studentAttendanceList').doc(studentAttListID)
-                  .collection('studentAttendanceSession')
-                  .get();
-              List<DocumentSnapshot<Map<String, dynamic>>> attListDocuments = attListQuerySnapshot.docs;
-              if(attListDocuments.length == hoursDifference -1){
+              QuerySnapshot<Map<String, dynamic>> attListQuerySnapshot =
+                  await FirebaseFirestore.instance
+                      .collection('attendanceRecord')
+                      .doc(recordID)
+                      .collection('studentAttendanceList')
+                      .doc(studentAttListID)
+                      .collection('studentAttendanceSession')
+                      .get();
+              List<DocumentSnapshot<Map<String, dynamic>>> attListDocuments =
+                  attListQuerySnapshot.docs;
+              if (attListDocuments.length == hoursDifference - 1) {
                 //all record saved = Present
-                FirebaseFirestore.instance.collection('attendanceRecord').doc(recordID)
-                    .collection('studentAttendanceList').doc(studentAttListID).collection('studentAttendanceSession').add({
-                  'recordID' : recordID,
+                FirebaseFirestore.instance
+                    .collection('attendanceRecord')
+                    .doc(recordID)
+                    .collection('studentAttendanceList')
+                    .doc(studentAttListID)
+                    .collection('studentAttendanceSession')
+                    .add({
+                  'recordID': recordID,
                   'studentID': userID,
-                  'attendanceSession' : attendanceSession,
-                  'startAt' : DateFormat.jm().format(fieldStartTime),
-                  'endAt' : DateFormat.jm().format(fieldEndTime),
-                  'attendanceStatus' : studentAttendanceSessionStatus ? 'Present' : 'Absent',
-                  'createAt' : DateTime.now()
-                }).then((value){
-                  FirebaseFirestore.instance.collection('attendanceRecord').doc(recordID)
-                      .collection('studentAttendanceList').doc(studentAttListID).update({
-                    'attendanceStatus' : 1
-                  });
-                  FirebaseFirestore.instance.collection('attendanceRecord').doc(recordID).update({
-                    'markedUser' : recordData['markedUser']+1,
+                  'attendanceSession': attendanceSession,
+                  'startAt': DateFormat.jm().format(fieldStartTime),
+                  'endAt': DateFormat.jm().format(fieldEndTime),
+                  'attendanceStatus':
+                      studentAttendanceSessionStatus ? 'Present' : 'Absent',
+                  'createAt': DateTime.now()
+                }).then((value) {
+                  FirebaseFirestore.instance
+                      .collection('attendanceRecord')
+                      .doc(recordID)
+                      .collection('studentAttendanceList')
+                      .doc(studentAttListID)
+                      .update({'attendanceStatus': 1});
+                  FirebaseFirestore.instance
+                      .collection('attendanceRecord')
+                      .doc(recordID)
+                      .update({
+                    'markedUser': recordData['markedUser'] + 1,
                   });
                 });
-              }else{
+              } else {
                 //late
-                FirebaseFirestore.instance.collection('attendanceRecord').doc(recordID)
-                    .collection('studentAttendanceList').doc(studentAttListID).collection('studentAttendanceSession').add({
-                  'recordID' : recordID,
+                FirebaseFirestore.instance
+                    .collection('attendanceRecord')
+                    .doc(recordID)
+                    .collection('studentAttendanceList')
+                    .doc(studentAttListID)
+                    .collection('studentAttendanceSession')
+                    .add({
+                  'recordID': recordID,
                   'studentID': userID,
-                  'attendanceSession' : attendanceSession,
-                  'startAt' : DateFormat.jm().format(fieldStartTime),
-                  'endAt' : DateFormat.jm().format(fieldEndTime),
-                  'attendanceStatus' : studentAttendanceSessionStatus ? 'Present' : 'Absent',
-                  'createAt' : DateTime.now()
-                }).then((value){
-                  FirebaseFirestore.instance.collection('attendanceRecord').doc(recordID)
-                      .collection('studentAttendanceList').doc(studentAttListID).update({
-                    'attendanceStatus' : 3
-                  });
+                  'attendanceSession': attendanceSession,
+                  'startAt': DateFormat.jm().format(fieldStartTime),
+                  'endAt': DateFormat.jm().format(fieldEndTime),
+                  'attendanceStatus':
+                      studentAttendanceSessionStatus ? 'Present' : 'Absent',
+                  'createAt': DateTime.now()
+                }).then((value) {
+                  FirebaseFirestore.instance
+                      .collection('attendanceRecord')
+                      .doc(recordID)
+                      .collection('studentAttendanceList')
+                      .doc(studentAttListID)
+                      .update({'attendanceStatus': 3});
                 });
               }
             }
-          }else{
+          } else {
             setState(() {
               var snackBar = const SnackBar(
                 content: Text('Attendance Session Already Saved!'),
@@ -487,61 +638,86 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
             });
             return;
           }
-
-        }else{
+        } else {
           // remaining
-          QuerySnapshot<Map<String, dynamic>> checkAttListQuerySnapshot = await FirebaseFirestore.instance
-              .collection('attendanceRecord').doc(recordID).collection('studentAttendanceList').doc(studentAttListID)
-              .collection('studentAttendanceSession')
-              .where('startAt', isEqualTo: DateFormat.jm().format(fieldStartTime))
-              .get();
-          List<DocumentSnapshot<Map<String, dynamic>>> checkAttListDocuments = checkAttListQuerySnapshot.docs;
+          QuerySnapshot<Map<String, dynamic>> checkAttListQuerySnapshot =
+              await FirebaseFirestore.instance
+                  .collection('attendanceRecord')
+                  .doc(recordID)
+                  .collection('studentAttendanceList')
+                  .doc(studentAttListID)
+                  .collection('studentAttendanceSession')
+                  .where('startAt',
+                      isEqualTo: DateFormat.jm().format(fieldStartTime))
+                  .get();
+          List<DocumentSnapshot<Map<String, dynamic>>> checkAttListDocuments =
+              checkAttListQuerySnapshot.docs;
           bool docFounded = false;
-          if(checkAttListDocuments.isEmpty){
+          if (checkAttListDocuments.isEmpty) {
             docFounded = false;
-          }else{
+          } else {
             docFounded = true;
           }
           //check if late
-          QuerySnapshot<Map<String, dynamic>> attListQuerySnapshot = await FirebaseFirestore.instance
-              .collection('attendanceRecord').doc(recordID).collection('studentAttendanceList').doc(studentAttListID)
-              .collection('studentAttendanceSession')
-              .where('startAt', isEqualTo: DateFormat.jm().format(startTime))
-              .get();
-          List<DocumentSnapshot<Map<String, dynamic>>> attListDocuments = attListQuerySnapshot.docs;
+          QuerySnapshot<Map<String, dynamic>> attListQuerySnapshot =
+              await FirebaseFirestore.instance
+                  .collection('attendanceRecord')
+                  .doc(recordID)
+                  .collection('studentAttendanceList')
+                  .doc(studentAttListID)
+                  .collection('studentAttendanceSession')
+                  .where('startAt',
+                      isEqualTo: DateFormat.jm().format(startTime))
+                  .get();
+          List<DocumentSnapshot<Map<String, dynamic>>> attListDocuments =
+              attListQuerySnapshot.docs;
 
-          if(!docFounded){
-            if(attListDocuments.isEmpty){
+          if (!docFounded) {
+            if (attListDocuments.isEmpty) {
               //late
-              FirebaseFirestore.instance.collection('attendanceRecord').doc(recordID)
-                  .collection('studentAttendanceList').doc(studentAttListID).collection('studentAttendanceSession').add({
-                'recordID' : recordID,
+              FirebaseFirestore.instance
+                  .collection('attendanceRecord')
+                  .doc(recordID)
+                  .collection('studentAttendanceList')
+                  .doc(studentAttListID)
+                  .collection('studentAttendanceSession')
+                  .add({
+                'recordID': recordID,
                 'studentID': userID,
-                'attendanceSession' : attendanceSession,
-                'startAt' : DateFormat.jm().format(fieldStartTime),
-                'endAt' : DateFormat.jm().format(fieldEndTime),
-                'attendanceStatus' : studentAttendanceSessionStatus ? 'Present' : 'Absent',
-                'createAt' : DateTime.now()
+                'attendanceSession': attendanceSession,
+                'startAt': DateFormat.jm().format(fieldStartTime),
+                'endAt': DateFormat.jm().format(fieldEndTime),
+                'attendanceStatus':
+                    studentAttendanceSessionStatus ? 'Present' : 'Absent',
+                'createAt': DateTime.now()
               }).then((value) {
-                FirebaseFirestore.instance.collection('attendanceRecord').doc(recordID)
-                    .collection('studentAttendanceList').doc(studentAttListID).update({
-                  'attendanceStatus' : 3
-                });
+                FirebaseFirestore.instance
+                    .collection('attendanceRecord')
+                    .doc(recordID)
+                    .collection('studentAttendanceList')
+                    .doc(studentAttListID)
+                    .update({'attendanceStatus': 3});
               });
-
-            }else{
+            } else {
               //not late
-              FirebaseFirestore.instance.collection('attendanceRecord').doc(recordID)
-                  .collection('studentAttendanceList').doc(studentAttListID).collection('studentAttendanceSession').add({
-                'recordID' : recordID,
+              FirebaseFirestore.instance
+                  .collection('attendanceRecord')
+                  .doc(recordID)
+                  .collection('studentAttendanceList')
+                  .doc(studentAttListID)
+                  .collection('studentAttendanceSession')
+                  .add({
+                'recordID': recordID,
                 'studentID': userID,
-                'attendanceSession' : attendanceSession,
-                'startAt' : DateFormat.jm().format(fieldStartTime),
-                'endAt' : DateFormat.jm().format(fieldEndTime),
-                'attendanceStatus' : studentAttendanceSessionStatus ? 'Present' : 'Absent'
+                'attendanceSession': attendanceSession,
+                'startAt': DateFormat.jm().format(fieldStartTime),
+                'endAt': DateFormat.jm().format(fieldEndTime),
+                'attendanceStatus':
+                    studentAttendanceSessionStatus ? 'Present' : 'Absent',
+                'createAt': DateTime.now()
               });
             }
-          }else{
+          } else {
             setState(() {
               var snackBar = const SnackBar(
                 content: Text('Attendance Session Already Saved!'),
@@ -561,8 +737,7 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
         );
         ScaffoldMessenger.of(context).showSnackBar(snackBar);
       });
-
-    }on FirebaseFirestore catch(error){
+    } on FirebaseFirestore catch (error) {
       var snackBar = SnackBar(
         content: Text(error.toString()),
         behavior: SnackBarBehavior.floating,
@@ -591,31 +766,40 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  locationLoaded && cameraReady ?
-                  SizedBox(
-                    height: 200,
-                    width: MediaQuery.of(context).size.width,
-                    child: googleMapWidget(),
-                  ) : const Center(child: CircularProgressIndicator(),),
+                  locationLoaded && cameraReady
+                      ? SizedBox(
+                          height: 200,
+                          width: MediaQuery.of(context).size.width,
+                          child: googleMapWidget(),
+                        )
+                      : const Center(
+                          child: CircularProgressIndicator(),
+                        ),
                   TextFormField(
                     controller: withinController,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: isInSelectedArea ? Colors.green : Colors.red,
                     ),
-                    decoration: const InputDecoration(labelText: 'Within Area',icon:Icon(Icons.location_on_outlined),border: InputBorder.none),
+                    decoration: const InputDecoration(
+                        labelText: 'Within Area',
+                        icon: Icon(Icons.location_on_outlined),
+                        border: InputBorder.none),
                     readOnly: true,
                   ),
                   TextFormField(
                     controller: dateController,
-                    decoration: const InputDecoration(labelText: 'Attendance Date',icon:Icon(Icons.date_range),border: InputBorder.none),
+                    decoration: const InputDecoration(
+                        labelText: 'Attendance Date',
+                        icon: Icon(Icons.date_range),
+                        border: InputBorder.none),
                     readOnly: true,
-                    validator: (value){
-                      if(value == null || value.trim().isEmpty){
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
                         return 'Please select a date';
                       }
                     },
-                    onTap: (){
+                    onTap: () {
                       print(widget.attendanceRecordID);
                     },
                   ),
@@ -631,16 +815,18 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
     );
   }
 
-  Widget dynamicTextField(){
+  Widget dynamicTextField() {
     return ListView.builder(
       itemCount: hoursDifference,
       itemBuilder: (context, index) {
         // Calculate the current time for the text field based on the index
         DateTime startTimeForTextField = startTime.add(Duration(hours: index));
-        DateTime endTimeForTextField = startTime.add(Duration(hours: index + 1));
+        DateTime endTimeForTextField =
+            startTime.add(Duration(hours: index + 1));
 
         // Format the time in the desired format
-        String formattedStartTime = DateFormat.jm().format(startTimeForTextField);
+        String formattedStartTime =
+            DateFormat.jm().format(startTimeForTextField);
         String formattedEndTime = DateFormat.jm().format(endTimeForTextField);
 
         // Set the text field value as a formatted time range
@@ -673,69 +859,71 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
     return SizedBox(
       height: 200,
       width: MediaQuery.of(context).size.width,
-      child: isClose ?
-      GoogleMap(
-        zoomGesturesEnabled: false,
-        scrollGesturesEnabled: false,
-        tiltGesturesEnabled: false,
-        rotateGesturesEnabled: false,
-        zoomControlsEnabled: false,
-        onMapCreated: (controller) {
-          setState(() {
-            mapController = controller;
-          });
-        },
-        initialCameraPosition: CameraPosition(
-          target: cameraLocation,
-          zoom: 19.0,
-        ),
-        markers: {
-          Marker(
-            markerId: MarkerId('currentLocation'),
-            position: cameraLocation,
-            infoWindow: const InfoWindow(title: 'Current Location'),
-          ),
-        },
-        circles: {
-          Circle(
-            circleId: const CircleId('radiusCircle'),
-            center: targetLocation,
-            radius: isClose ? 10 : 0, // in meters
-            strokeWidth: 2,
-            strokeColor: Colors.red,
-            fillColor: Colors.red.withOpacity(0.2),
-          ),
-        },
-      ) :
-      GoogleMap(
-          onMapCreated: (controller) {
-            setState(() {
-              mapController = controller;
-              LatLngBounds bounds = getPolygonBounds(cameraPoints);
-              LatLng center = LatLng(
-                (bounds.southwest.latitude + bounds.northeast.latitude) / 2,
-                (bounds.southwest.longitude + bounds.northeast.longitude) / 2,
-              );
-              CameraPosition cameraPosition = CameraPosition(
+      child: isClose
+          ? GoogleMap(
+              zoomGesturesEnabled: false,
+              scrollGesturesEnabled: false,
+              tiltGesturesEnabled: false,
+              rotateGesturesEnabled: false,
+              zoomControlsEnabled: false,
+              onMapCreated: (controller) {
+                setState(() {
+                  mapController = controller;
+                });
+              },
+              initialCameraPosition: CameraPosition(
                 target: cameraLocation,
-                zoom: 18.0, // Adjust the zoom level as needed
-              );
-              mapController!.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
-            });
-          },
-          initialCameraPosition: const CameraPosition(
-            target: LatLng(1.5331988034221635, 103.6828984846777),
-            zoom: 19.0, // Initial zoom level
-          ),
-          polygons: polygons,
-        markers: {
-          Marker(
-            markerId: MarkerId('currentLocation'),
-            position: cameraLocation,
-            infoWindow: const InfoWindow(title: 'Current Location'),
-          ),
-        },
-      ),
+                zoom: 19.0,
+              ),
+              markers: {
+                Marker(
+                  markerId: MarkerId('currentLocation'),
+                  position: cameraLocation,
+                  infoWindow: const InfoWindow(title: 'Current Location'),
+                ),
+              },
+              circles: {
+                Circle(
+                  circleId: const CircleId('radiusCircle'),
+                  center: targetLocation,
+                  radius: isClose ? 10 : 0, // in meters
+                  strokeWidth: 2,
+                  strokeColor: Colors.red,
+                  fillColor: Colors.red.withOpacity(0.2),
+                ),
+              },
+            )
+          : GoogleMap(
+              onMapCreated: (controller) {
+                setState(() {
+                  mapController = controller;
+                  LatLngBounds bounds = getPolygonBounds(cameraPoints);
+                  LatLng center = LatLng(
+                    (bounds.southwest.latitude + bounds.northeast.latitude) / 2,
+                    (bounds.southwest.longitude + bounds.northeast.longitude) /
+                        2,
+                  );
+                  CameraPosition cameraPosition = CameraPosition(
+                    target: cameraLocation,
+                    zoom: 18.0, // Adjust the zoom level as needed
+                  );
+                  mapController!.animateCamera(
+                      CameraUpdate.newCameraPosition(cameraPosition));
+                });
+              },
+              initialCameraPosition: const CameraPosition(
+                target: LatLng(1.5331988034221635, 103.6828984846777),
+                zoom: 19.0, // Initial zoom level
+              ),
+              polygons: polygons,
+              markers: {
+                Marker(
+                  markerId: MarkerId('currentLocation'),
+                  position: cameraLocation,
+                  infoWindow: const InfoWindow(title: 'Current Location'),
+                ),
+              },
+            ),
     );
   }
 

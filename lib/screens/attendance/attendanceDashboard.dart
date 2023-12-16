@@ -6,6 +6,7 @@ import 'package:location/location.dart';
 import 'package:u_marked/reusable_widget/appBar.dart';
 import 'package:u_marked/screens/attendance/markedBottomSheet.dart';
 import 'package:u_marked/screens/attendance/studentAttendanceList.dart';
+import 'package:u_marked/screens/attendance/viewMyAttendanceSession.dart';
 
 class AttendanceDashboard extends StatefulWidget {
   const AttendanceDashboard({Key? key,required this.isStudent, required this.attendanceRecordID}) : super(key: key);
@@ -216,15 +217,12 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> {
                     crossAxisSpacing: 20,
                     mainAxisSpacing: 30,
                     children: [
-                      Visibility(
-                        visible: !widget.isStudent,
-                        child: itemDashboard('Student Attendance', CupertinoIcons.person_crop_circle_fill_badge_checkmark, Colors.deepOrange, 1),
-                      ),
-                      Visibility(
-                        visible: widget.isStudent,
-                        child: itemDashboard('Capture Attendances', CupertinoIcons.check_mark_circled, Colors.green, 2),
-                      ),
-
+                      if(!widget.isStudent)
+                        itemDashboard('Student Attendance', CupertinoIcons.person_crop_circle_fill_badge_checkmark, Colors.deepOrange, 1),
+                      if(widget.isStudent)
+                        itemDashboard('Capture Attendances', CupertinoIcons.check_mark_circled, Colors.green, 2),
+                      if(widget.isStudent)
+                        itemDashboard('View My Attendance Session', CupertinoIcons.search, Colors.blue, 3),
                     ],
                   )
                 ],
@@ -255,11 +253,11 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> {
         //   );
           break;
         case 3 :
-          // Navigator.of(context).push(
-          //   MaterialPageRoute(
-          //     builder: (context) => memberList(classID: widget.classID, lecturerID: _lecID),
-          //   ),
-          // );
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ViewMyAttendanceSessionPage(isStudent: widget.isStudent, attendanceRecordID: widget.attendanceRecordID, date: date, time: time,),
+            ),
+          );
           break;
       }
     },
@@ -288,7 +286,7 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> {
               child: Icon(iconData, color: Colors.white)
           ),
           const SizedBox(height: 8),
-          Text(title.toUpperCase(), style: Theme.of(context).textTheme.titleMedium)
+          Text(title.toUpperCase(), style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center,)
         ],
       ),
     ),
@@ -353,6 +351,9 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> {
   void _showMarkedBottomSheet(BuildContext context, String RecordID) {
     showModalBottomSheet(
       context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+      ),
       builder: (BuildContext context) {
         return markedBottomSheet(attendanceRecordID: RecordID); // Display the FormBottomSheet widget
       },

@@ -20,57 +20,69 @@ exports.checkAttendanceStatus = functions.pubsub
   .timeZone("Asia/Singapore")
   .onRun(async () => {
     try {
+      const currentTime = new Date();
+      currentTime.setHours(currentTime.getHours() + 8); // Adjust for UTC+8
+
       const attendanceRecordsSnapshot = await admin
         .firestore()
         .collection("attendanceRecord")
         .get();
 
       attendanceRecordsSnapshot.forEach(async (attendanceRecord) => {
-        const studentAttendanceListSnapshot = await attendanceRecord.ref
-          .collection("studentAttendanceList")
-          .get();
+        const endTimeString = attendanceRecord.data().endAt;
+        const endTime = new Date(
+          `${attendanceRecord.data().date} ${endTimeString}`
+        );
 
-        studentAttendanceListSnapshot.forEach(async (studentAttendance) => {
-          const attendanceStatus = studentAttendance.data().attendanceStatus;
+        // Check if current time is after the endTime in attendanceRecord
+        if (currentTime > endTime) {
+          const studentAttendanceListSnapshot = await attendanceRecord.ref
+            .collection("studentAttendanceList")
+            .get();
 
-          if (attendanceStatus === 0) {
-            const studentAttendanceSessionSnapshot = await studentAttendance.ref
-              .collection("studentAttendanceSession")
-              .get();
+          studentAttendanceListSnapshot.forEach(async (studentAttendance) => {
+            const attendanceStatus = studentAttendance.data().attendanceStatus;
 
-            if (studentAttendanceSessionSnapshot.empty) {
-              // No data in studentAttendanceSession, perform your logic here
-              await studentAttendance.ref.update({ attendanceStatus: 2 });
-              console.log("No data in studentAttendanceSession");
-            } else {
-              // Data exists in studentAttendanceSession, perform other logic if needed
-              let sessionMatchFound = false;
+            if (attendanceStatus === 0) {
+              const studentAttendanceSessionSnapshot =
+                await studentAttendance.ref
+                  .collection("studentAttendanceSession")
+                  .get();
 
-              studentAttendanceSessionSnapshot.forEach((sessionDoc) => {
-                const sessionData = sessionDoc.data();
-                const startAtRecord = attendanceRecord.data().startAt;
-                const startAtSession = sessionData.startAt;
+              if (studentAttendanceSessionSnapshot.empty) {
+                // No data in studentAttendanceSession, perform your logic here
+                await studentAttendance.ref.update({ attendanceStatus: 2 });
+                console.log("No data in studentAttendanceSession");
+              } else {
+                // Data exists in studentAttendanceSession, perform other logic if needed
+                let sessionMatchFound = false;
 
-                if (startAtRecord === startAtSession) {
-                  // Match found, update sessionMatchFound
-                  sessionMatchFound = true;
-                }
-              });
+                studentAttendanceSessionSnapshot.forEach((sessionDoc) => {
+                  const sessionData = sessionDoc.data();
+                  const startAtRecord = attendanceRecord.data().startAt;
+                  const startAtSession = sessionData.startAt;
 
-              // Set attendanceStatus based on sessionMatchFound
-              const updatedAttendanceStatus = sessionMatchFound ? 4 : 3;
+                  if (startAtRecord === startAtSession) {
+                    // Match found, update sessionMatchFound
+                    sessionMatchFound = true;
+                  }
+                });
 
-              // Update attendanceStatus in studentAttendanceList
-              await studentAttendance.ref.update({
-                attendanceStatus: updatedAttendanceStatus,
-              });
-              console.log(
-                `Updated attendanceStatus to ${updatedAttendanceStatus} for document:`,
-                studentAttendance.id
-              );
+                // Set attendanceStatus based on sessionMatchFound
+                const updatedAttendanceStatus = sessionMatchFound ? 4 : 3;
+
+                // Update attendanceStatus in studentAttendanceList
+                await studentAttendance.ref.update({
+                  attendanceStatus: updatedAttendanceStatus,
+                });
+                console.log(
+                  `Updated attendanceStatus to ${updatedAttendanceStatus} for document:`,
+                  studentAttendance.id
+                );
+              }
             }
-          }
-        });
+          });
+        }
       });
 
       return null;
