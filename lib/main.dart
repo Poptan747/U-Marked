@@ -25,9 +25,9 @@ Future<void> main() async {
   );
   try {
     var tokenResponse = await FirebaseAppCheck.instance.getToken();
-    print('Integrity Token: ${tokenResponse}');
+    // print('Integrity Token: ${tokenResponse}');
   } catch (e) {
-    print('Error getting Integrity Token: $e');
+    // print('Error getting Integrity Token: $e');
   }
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,overlays: [SystemUiOverlay.top]);

@@ -298,11 +298,6 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> {
       width: MediaQuery.of(context).size.width,
       child: isClose ?
       GoogleMap(
-        zoomGesturesEnabled: false,
-        scrollGesturesEnabled: false,
-        tiltGesturesEnabled: false,
-        rotateGesturesEnabled: false,
-        zoomControlsEnabled: false,
         onMapCreated: (controller) {
           setState(() {
             mapController = controller;

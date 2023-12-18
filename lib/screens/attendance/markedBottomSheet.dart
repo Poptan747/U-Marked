@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as map_tool;
 
 class markedBottomSheet extends StatefulWidget {
@@ -57,16 +59,20 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
   late List<TextEditingController> controllers;
   late List<bool> switchValues;
   late List<bool> isSwitchDisabled;
+  bool isLoading = true;
 
   int hoursDifference = 0;
   DateTime startTime = DateTime.now();
   DateTime endTime = DateTime.now();
   List<Widget> textFields = [];
 
+  final LocalAuthentication auth = LocalAuthentication();
+  bool _supportState = false;
+
   @override
   void initState() {
     super.initState();
-    loadData();
+    isLoading = true;
     currentPosition = Position(
         longitude: 0,
         latitude: 0,
@@ -79,6 +85,7 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
         speed: 1,
         speedAccuracy: 1);
     _initGeolocator();
+    loadData();
   }
 
   @override
@@ -326,6 +333,22 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
     }
   }
 
+  Future<bool> _authenticate() async{
+    try{
+      bool authenticated = await auth.authenticate(
+        localizedReason: 'Please authenticate to capture attendance',
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
+      );
+      return authenticated;
+    } on PlatformException catch (e){
+      print(e);
+      return false;
+    }
+  }
+
   DateTime convertStringToDateTime(String timeString) {
     // Convert the string to a DateTime object
     DateTime parsedTime = DateFormat.jm().parse(timeString);
@@ -348,7 +371,7 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
     _determinePosition();
     const LocationSettings locationSettings = LocationSettings(
       accuracy: LocationAccuracy.best,
-      distanceFilter: 1,
+      distanceFilter: 0,
     );
     _positionStreamSubscription =
         Geolocator.getPositionStream(locationSettings: locationSettings).listen(
@@ -432,6 +455,7 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
       } else {
         withinController.text = 'Not Within Area';
       }
+      isLoading = false;
       print(isInSelectedArea);
     });
   }
@@ -443,6 +467,11 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
     String studentAttListID = '';
 
     try {
+      bool isAuth = await _authenticate();
+      if(!isAuth){
+        return;
+      }
+
       var recordCollection = await FirebaseFirestore.instance
           .collection('attendanceRecord')
           .doc(recordID)
@@ -506,7 +535,7 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
                 'studentID': userID,
                 'attendanceSession': attendanceSession,
                 'startAt': DateFormat.jm().format(startTime),
-                'endAt': DateFormat.jm().format(endTime),
+                'endAt': hoursDifferenceSubmit <= 1 ? DateFormat.jm().format(fieldEndTime) : DateFormat.jm().format(endTime),
                 'attendanceStatus':
                     studentAttendanceSessionStatus ? 'Present' : 'Absent',
                 'createAt': DateTime.now()
@@ -583,7 +612,7 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
                   'studentID': userID,
                   'attendanceSession': attendanceSession,
                   'startAt': DateFormat.jm().format(fieldStartTime),
-                  'endAt': DateFormat.jm().format(fieldEndTime),
+                  'endAt': DateFormat.jm().format(endTime),
                   'attendanceStatus':
                       studentAttendanceSessionStatus ? 'Present' : 'Absent',
                   'createAt': DateTime.now()
@@ -803,9 +832,14 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
                       print(widget.attendanceRecordID);
                     },
                   ),
+                  isLoading?
+                  const Center(
+                    child: CircularProgressIndicator(),
+                  ):
                   Column(
                     children: textFields,
                   ),
+                  ElevatedButton(onPressed: _authenticate, child: Text('AUTH'))
                 ],
               ),
             ),
