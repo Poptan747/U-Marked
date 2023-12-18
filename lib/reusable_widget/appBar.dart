@@ -4,6 +4,7 @@ import 'package:marquee/marquee.dart';
 import 'package:u_marked/reusable_widget/bottomSheet.dart';
 import 'package:u_marked/screens/admin/classManagement/addClassPage.dart';
 import 'package:u_marked/screens/class/memberList.dart';
+import 'package:u_marked/screens/post/postBottomSheet.dart';
 import 'gradientBackground.dart';
 
 GFAppBar myClassAppBar = GFAppBar(
@@ -26,6 +27,18 @@ GFAppBar myClassAppBar = GFAppBar(
   ],
 );
 
+GFAppBar myAttendanceAppBar(BuildContext context) {
+  return GFAppBar(
+    centerTitle: true,
+    elevation: 0,
+    // automaticallyImplyLeading: false,
+    flexibleSpace: Container(
+      decoration: myClassAppBarBackgroundDecoration,
+    ),
+    title: const Text("My Attendance"),
+  );
+}
+
 GFAppBar classDetailsAppBar(String className, BuildContext context){
   return GFAppBar(
     centerTitle: true,
@@ -35,6 +48,42 @@ GFAppBar classDetailsAppBar(String className, BuildContext context){
       decoration: myClassAppBarBackgroundDecoration,
     ),
     title: SingleChildScrollView(scrollDirection:Axis.horizontal, child: Text(className)),
+  );
+}
+
+GFAppBar postIndexAppBar(BuildContext context,String classID) {
+  return GFAppBar(
+    centerTitle: true,
+    elevation: 0,
+    // automaticallyImplyLeading: false,
+    flexibleSpace: Container(
+      decoration: myClassAppBarBackgroundDecoration,
+    ),
+    title: const Text("Posts"),
+    actions: [
+      GFIconButton(
+        icon: const Icon(
+          Icons.post_add_outlined,
+          color: Colors.white,
+        ),
+        onPressed: () {
+          showModalBottomSheet(
+            isScrollControlled: true,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            context: context,
+            builder: (BuildContext context) {
+              return Padding(
+                padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                child: createPostBottomSheet(classID: classID),
+              );
+            },
+          );
+        },
+        type: GFButtonType.transparent,
+      )
+    ],
   );
 }
 

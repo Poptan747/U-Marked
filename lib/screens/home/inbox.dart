@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +17,7 @@ class inboxPage extends StatefulWidget {
 
 var _userNameMap = <String, String>{};
 var _userImageUrlMap = <String, String>{};
+var _hasUserImageUrlMap = <String, bool>{};
 var _latestMsgMap = <String, String>{};
 var _latestMsgTimeMap = <String, String>{};
 var _isStudent = true;
@@ -40,6 +43,7 @@ class _inboxPageState extends State<inboxPage> {
     setState(() {
       _userNameMap = <String, String>{};
       _userImageUrlMap = <String, String>{};
+      _hasUserImageUrlMap = <String, bool>{};
       _latestMsgMap = <String, String>{};
       _latestMsgTimeMap = <String, String>{};
       _isStudent = true;
@@ -136,10 +140,13 @@ class _inboxPageState extends State<inboxPage> {
               passUser2ID[chatroomID] = user2;
             });
           }
-          if(_userImageUrlMap[chatroomID]!.isEmpty){
+          if(_userImageUrlMap[chatroomID]!.trim().isEmpty){
             setState(() {
+              _hasUserImageUrlMap[chatroomID] = false;
               _userImageUrlMap[chatroomID] = '';
             });
+          }else{
+            _hasUserImageUrlMap[chatroomID] = true;
           }
           loadInboxData(chatroomID);
         }else{
@@ -203,7 +210,7 @@ class _inboxPageState extends State<inboxPage> {
 }
 
 Text showEmptyClass = const Text(
-    'No classes available.',
+    'No Chatroom Available.',
     style: TextStyle(
         color: Colors.white,
         fontSize: 25
@@ -227,14 +234,15 @@ Widget _buildClassListStream() {
       return ListView.builder(
         itemCount: orderSnapshot.data!.docs.length,
         itemBuilder: (context, index) {
+          List<bool> hasURL = List.generate(orderSnapshot.data!.docs.length, (index) => false);
           var orderData = orderSnapshot.data!.docs[index].data() as Map<String, dynamic>;
           var chatroomID = orderData['chatroomID'];
-          var URL = _userImageUrlMap[chatroomID];
+          String imageUrl = _userImageUrlMap[chatroomID]?.trim() ?? '';
           return GFListTile(
             padding: EdgeInsets.all(20),
-            avatar:URL != null?
+            avatar: imageUrl.isNotEmpty ?
             GFAvatar(
-              backgroundImage: NetworkImage(URL),
+              backgroundImage: NetworkImage(imageUrl),
               size: GFSize.LARGE,
               shape: GFAvatarShape.standard,
             ):

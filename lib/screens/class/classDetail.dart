@@ -6,6 +6,8 @@ import 'package:u_marked/reusable_widget/appBar.dart';
 import 'package:u_marked/reusable_widget/gradientBackground.dart';
 import 'package:u_marked/screens/attendance/attendance.dart';
 import 'package:u_marked/screens/class/memberList.dart';
+import 'package:u_marked/screens/post/post.dart';
+import 'package:u_marked/screens/post/postIndex.dart';
 
 
 class classDetail extends StatefulWidget {
@@ -150,10 +152,13 @@ class _classDetailState extends State<classDetail> {
     onTap: (){
       switch (index) {
         case 1:
-        // do something
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => PostIndex(classID: widget.classID),
+            ),
+          );
           break;
         case 2:
-        // do something else attendanceWidget
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => attendanceWidget(isStudent: widget.isStudent,classID: widget.classID),

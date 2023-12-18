@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:getwidget/getwidget.dart';
 import 'package:u_marked/models/userModel.dart';
 import 'package:u_marked/reusable_widget/alertDialog.dart';
+import 'package:u_marked/screens/attendance/myAttendance.dart';
 import 'package:u_marked/screens/class/classList.dart';
+import 'package:u_marked/screens/home/recentAttendance.dart';
 import 'package:u_marked/screens/profile/profilePage.dart';
 import '../../reusable_widget/gradientBackground.dart';
 
@@ -46,13 +48,12 @@ class _homePageState extends State<homePage> {
     UserDetail newUser = UserDetail(uid: user.uid, email: data['email'], userType: data['userType']);
     Map<String, dynamic> userDetailmap = await newUser.getUserDetail();
 
-    if(userDetailmap['userType'] == 1){
-      _isStudent = true;
-    }else{
-      _isStudent = false;
-    }
-
       setState(() {
+        if(userDetailmap['userType'] == 1){
+          _isStudent = true;
+        }else{
+          _isStudent = false;
+        }
         _name = userDetailmap['name'];
         _studentID = userDetailmap['studentID'];
         _batch = userDetailmap['batch'];
@@ -137,13 +138,19 @@ class _homePageState extends State<homePage> {
                                       },
                                         icon: Icon(Icons.school),
                                         color: Colors.blue.shade900,),
-                                      const Expanded(child: Text('My Class'))
+                                      Expanded(child: Text('My Class',style: Theme.of(context).textTheme.labelLarge))
                                     ],
                                   ),
                                   Column(
                                     children: [
-                                      IconButton(onPressed: (){}, icon: Icon(Icons.history_edu),color: Colors.blue.shade900),
-                                      const Expanded(child: Text('My Attendance'))
+                                      IconButton(onPressed: (){
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) => MyAttendance(),
+                                          ),
+                                        );
+                                      }, icon: Icon(Icons.history_edu),color: Colors.blue.shade900),
+                                      Expanded(child: Text('My Attendance',style: Theme.of(context).textTheme.labelLarge))
                                     ],
                                   ),
                                   // Column(
@@ -163,103 +170,104 @@ class _homePageState extends State<homePage> {
                   const SizedBox(height: 20),
                   const Divider(color: Colors.white,thickness: 3,),
                   const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Center(
-                          child: FractionallySizedBox(
-                            widthFactor: 0.9,
-                            child: Container(
-                                height: 510,
-                                decoration: const BoxDecoration(
-                                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                                  color: Colors.white,
-                                  boxShadow: <BoxShadow>[
-                                    BoxShadow(
-                                        color: Colors.black54,
-                                        blurRadius: 10.0,
-                                        offset: Offset(0.0, 0.75)
-                                    )
-                                  ],
-                                ),
-                                child: SingleChildScrollView(
-                                  child: Column(
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Container(
-                                              height: 50,
-                                              decoration: const BoxDecoration(
-                                                color: Colors.blue,
-                                                borderRadius: BorderRadius.all(Radius.circular(3)),
-                                              ),
-                                              child: const Padding(
-                                                padding: EdgeInsets.fromLTRB(8, 13, 8, 8),
-                                                child: Text('Recent Attendance',style: TextStyle(color: Colors.white, fontSize: 25, fontWeight: FontWeight.bold)),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Column(
-                                        children: [
-                                          Column(
-                                            children: [
-                                              GFListTile(
-                                                  padding: EdgeInsets.all(20),
-                                                  avatar:GFAvatar(
-                                                    backgroundImage: AssetImage('images/location/IEB.jpg'),
-                                                  ),
-                                                  titleText:'BGEN1013 Academic English',
-                                                  subTitleText:'10.00am-12-00am, 13/7/2023',
-                                                  color: Colors.white,
-                                                  icon: Icon(Icons.keyboard_double_arrow_right)
-                                              ),
-                                              GFListTile(
-                                                  padding: EdgeInsets.all(20),
-                                                  avatar:GFAvatar(
-                                                    backgroundImage: AssetImage('images/location/IEB.jpg'),
-                                                  ),
-                                                  titleText:'BGEN1013 Academic English',
-                                                  subTitleText:'10.00am-12-00am, 13/7/2023',
-                                                  color: Colors.white,
-                                                  icon: Icon(Icons.keyboard_double_arrow_right)
-                                              ),
-                                              GFListTile(
-                                                  padding: EdgeInsets.all(20),
-                                                  avatar:GFAvatar(
-                                                    backgroundImage: AssetImage('images/location/IEB.jpg'),
-                                                  ),
-                                                  titleText:'BGEN1013 Academic English',
-                                                  subTitleText:'10.00am-12-00am, 13/7/2023',
-                                                  color: Colors.white,
-                                                  icon: Icon(Icons.keyboard_double_arrow_right)
-                                              ),
-                                              GFListTile(
-                                                  padding: EdgeInsets.all(20),
-                                                  avatar:GFAvatar(
-                                                    backgroundImage: AssetImage('images/location/IEB.jpg'),
-                                                  ),
-                                                  titleText:'BGEN1013 Academic English',
-                                                  subTitleText:'10.00am-12-00am, 13/7/2023',
-                                                  color: Colors.white,
-                                                  icon: Icon(Icons.keyboard_double_arrow_right)
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                )
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10)
+                  RecentAttendance(isStudent: _isStudent)
+                  // Row(
+                  //   children: [
+                  //     Flexible(
+                  //       child: Center(
+                  //         child: FractionallySizedBox(
+                  //           widthFactor: 0.9,
+                  //           child: Container(
+                  //               height: 510,
+                  //               decoration: const BoxDecoration(
+                  //                 borderRadius: BorderRadius.all(Radius.circular(10)),
+                  //                 color: Colors.white,
+                  //                 boxShadow: <BoxShadow>[
+                  //                   BoxShadow(
+                  //                       color: Colors.black54,
+                  //                       blurRadius: 10.0,
+                  //                       offset: Offset(0.0, 0.75)
+                  //                   )
+                  //                 ],
+                  //               ),
+                  //               child: SingleChildScrollView(
+                  //                 child: Column(
+                  //                   children: [
+                  //                     Row(
+                  //                       children: [
+                  //                         Expanded(
+                  //                           child: Container(
+                  //                             height: 50,
+                  //                             decoration: const BoxDecoration(
+                  //                               color: Colors.blue,
+                  //                               borderRadius: BorderRadius.all(Radius.circular(3)),
+                  //                             ),
+                  //                             child: const Padding(
+                  //                               padding: EdgeInsets.fromLTRB(8, 13, 8, 8),
+                  //                               child: Text('Recent Attendance',style: TextStyle(color: Colors.white, fontSize: 25, fontWeight: FontWeight.bold)),
+                  //                             ),
+                  //                           ),
+                  //                         ),
+                  //                       ],
+                  //                     ),
+                  //                     Column(
+                  //                       children: [
+                  //                         Column(
+                  //                           children: [
+                  //                             GFListTile(
+                  //                                 padding: EdgeInsets.all(20),
+                  //                                 avatar:GFAvatar(
+                  //                                   backgroundImage: AssetImage('images/location/IEB.jpg'),
+                  //                                 ),
+                  //                                 titleText:'BGEN1013 Academic English',
+                  //                                 subTitleText:'10.00am-12-00am, 13/7/2023',
+                  //                                 color: Colors.white,
+                  //                                 icon: Icon(Icons.keyboard_double_arrow_right)
+                  //                             ),
+                  //                             GFListTile(
+                  //                                 padding: EdgeInsets.all(20),
+                  //                                 avatar:GFAvatar(
+                  //                                   backgroundImage: AssetImage('images/location/IEB.jpg'),
+                  //                                 ),
+                  //                                 titleText:'BGEN1013 Academic English',
+                  //                                 subTitleText:'10.00am-12-00am, 13/7/2023',
+                  //                                 color: Colors.white,
+                  //                                 icon: Icon(Icons.keyboard_double_arrow_right)
+                  //                             ),
+                  //                             GFListTile(
+                  //                                 padding: EdgeInsets.all(20),
+                  //                                 avatar:GFAvatar(
+                  //                                   backgroundImage: AssetImage('images/location/IEB.jpg'),
+                  //                                 ),
+                  //                                 titleText:'BGEN1013 Academic English',
+                  //                                 subTitleText:'10.00am-12-00am, 13/7/2023',
+                  //                                 color: Colors.white,
+                  //                                 icon: Icon(Icons.keyboard_double_arrow_right)
+                  //                             ),
+                  //                             GFListTile(
+                  //                                 padding: EdgeInsets.all(20),
+                  //                                 avatar:GFAvatar(
+                  //                                   backgroundImage: AssetImage('images/location/IEB.jpg'),
+                  //                                 ),
+                  //                                 titleText:'BGEN1013 Academic English',
+                  //                                 subTitleText:'10.00am-12-00am, 13/7/2023',
+                  //                                 color: Colors.white,
+                  //                                 icon: Icon(Icons.keyboard_double_arrow_right)
+                  //                             ),
+                  //                           ],
+                  //                         ),
+                  //                       ],
+                  //                     ),
+                  //                   ],
+                  //                 ),
+                  //               )
+                  //           ),
+                  //         ),
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
+                  // const SizedBox(height: 10)
                 ],
               ),
             ),

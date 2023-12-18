@@ -110,12 +110,14 @@ class _newMessageState extends State<newMessage> {
       'userImage': userData['imagePath'].toString().isEmpty? '' : userData['imagePath'],
       'userName': _name,
       'createAt': Timestamp.now(),
+    }).then((value){
+      FirebaseFirestore.instance.collection('chatrooms').doc(chatroomID).set({
+        'latestMessage' : enteredMessage,
+        'latestMessageTimestamp' : Timestamp.now(),
+      });
     });
 
-    FirebaseFirestore.instance.collection('chatrooms').doc(chatroomID).update({
-      'latestMessage' : enteredMessage,
-      'latestMessageTimestamp' : Timestamp.now(),
-    });
+
 
     _messageController.clear();
   }

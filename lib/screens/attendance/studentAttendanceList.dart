@@ -33,6 +33,7 @@ class _studentAttendanceListState extends State<studentAttendanceList> {
   }
 
   defaultData(){
+    totalMemberCount = 0;
     _isLoading = true;
     _noData = true;
     _studentAttRecordID='';

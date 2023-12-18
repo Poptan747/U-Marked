@@ -219,6 +219,7 @@ class _FormBottomSheetState extends State<FormBottomSheet> {
         'geofencingType': selectedValue,
         'polygons': geoPoints,
         'markedUser' : 0,
+        'createAt' : DateTime.now(),
 
       }).then((value){
         FirebaseFirestore.instance.collection('classes').doc(widget.classID).collection('attendanceRecord').doc(value.id).set({
