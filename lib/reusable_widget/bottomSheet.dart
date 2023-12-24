@@ -270,7 +270,7 @@ class _FormBottomSheetState extends State<FormBottomSheet> {
         var userData = await userCollection.data() as Map<String, dynamic>;
 
         if (userData['userType'] == 1) {
-          print(userData['userType']);
+
           FirebaseFirestore.instance.collection('attendanceRecord').doc(recordID).collection('studentAttendanceList').add({
             'attendanceRecordID': recordID,
             'studentUID': userDocID,
@@ -278,7 +278,7 @@ class _FormBottomSheetState extends State<FormBottomSheet> {
             'attendanceTime': '',
             'notes': '',
           }).then((value) {
-            print('THRU HERE STUDENT');
+
             FirebaseFirestore.instance.collection('students').doc(userDocID).collection('attendanceRecord').doc(recordID).set({
               'attendanceRecordID': recordID,
               'studentAttendanceRecordID': value.id,

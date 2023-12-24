@@ -113,7 +113,7 @@ class _RecentAttendanceState extends State<RecentAttendance> {
                   _statusMap[studentAttRecordID] = 'Leave Early';
                   break;
                 case 5:
-                  _statusMap[studentAttRecordID] = 'Sick Leave';
+                  _statusMap[studentAttRecordID] = 'Apply Leave';
                   break;
                 default:
                   _statusMap[studentAttRecordID] = 'Absent';
@@ -369,8 +369,8 @@ class _RecentAttendanceState extends State<RecentAttendance> {
         return Icon(Icons.watch_later); // or any other icon for 'Late'
       case 'Leave Early':
         return Icon(Icons.exit_to_app); // or any other icon for 'Leave Early'
-      case 'Sick':
-        return Icon(Icons.sick_outlined); // or any other icon for 'Sick'
+      case 'Apply Leave':
+        return Icon(Icons.edit_document); // or any other icon for 'Sick'
       default:
         return Icon(Icons.help); // or any default icon for unknown status
     }

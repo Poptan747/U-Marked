@@ -131,6 +131,16 @@ GFAppBar attendanceDashBoardAppBar = GFAppBar(
   title: const Text("Attendance Dashboard"),
 );
 
+GFAppBar ApplyLeaveAppBar = GFAppBar(
+  centerTitle: true,
+  elevation: 0,
+  // automaticallyImplyLeading: false,
+  flexibleSpace: Container(
+    decoration: myClassAppBarBackgroundDecoration,
+  ),
+  title: Text("Apply Leave"),
+);
+
 GFAppBar attendanceSessionAppBar = GFAppBar(
   centerTitle: true,
   elevation: 0,

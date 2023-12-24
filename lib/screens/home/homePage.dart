@@ -29,8 +29,8 @@ class _homePageState extends State<homePage> {
     final fcm = FirebaseMessaging.instance;
     await fcm.requestPermission();
     final token = await fcm.getToken();
-    print('TOKEN HERE');
-    print(token);
+    // print('TOKEN HERE');
+    // print(token);
   }
 
   @override

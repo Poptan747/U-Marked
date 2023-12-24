@@ -133,8 +133,10 @@ class _classDetailState extends State<classDetail> {
                       mainAxisSpacing: 30,
                       children: [
                         itemDashboard('Posts', CupertinoIcons.bubble_left_bubble_right_fill, Colors.deepOrange, 1),
-                        itemDashboard('Attendances', CupertinoIcons.check_mark_circled, Colors.green, 2),
+                        itemDashboard('Attendances', CupertinoIcons.check_mark_circled, Colors.blue, 2),
                         itemDashboard('Member List', CupertinoIcons.person_2, Colors.purple, 3),
+                        // if(!widget.isStudent)
+                        // itemDashboard('Export Attendance Record', CupertinoIcons.arrow_down_doc, Colors.green, 4),
                       ],
                     ),
                   ),
@@ -172,6 +174,9 @@ class _classDetailState extends State<classDetail> {
             ),
           );
           break;
+        case 4 :
+
+          break;
       }
     },
     child: Container(
@@ -199,11 +204,30 @@ class _classDetailState extends State<classDetail> {
               child: Icon(iconData, color: Colors.white)
           ),
           const SizedBox(height: 8),
-          Text(title.toUpperCase(), style: Theme.of(context).textTheme.titleMedium)
+          Text(title.toUpperCase(), style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center)
         ],
       ),
     ),
   );
+
+  // void loadExcel() async{
+  //   String classID = widget.classID;
+  //
+  //
+  //   QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
+  //       .collection('attendanceRecord')
+  //       .where('classID', isEqualTo: classID)
+  //       .get();
+  //   List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot.docs;
+  //
+  //   if(documents.isNotEmpty){
+  //     for (DocumentSnapshot<Map<String, dynamic>> document in documents){
+  //       String recordID = document.id;
+  //       var recordData = document.data() as Map<String, dynamic>;
+  //
+  //     }
+  //   }
+  // }
 }
 
 Container showClassDetail(){

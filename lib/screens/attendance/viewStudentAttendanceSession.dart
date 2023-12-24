@@ -19,6 +19,9 @@ class _ViewStudentAttendanceSessionState extends State<ViewStudentAttendanceSess
   String date = '';
   String time = '';
   int status = 10;
+  String reason = '';
+  String desc = '';
+  String imageURL = '';
   bool _isLoading = true;
   bool _isEmpty = true;
   var _sessionMap = <String, String>{};
@@ -74,8 +77,7 @@ class _ViewStudentAttendanceSessionState extends State<ViewStudentAttendanceSess
           _isLoading = false;
         } else {
           studentAttListID = studentAttID;
-          for (DocumentSnapshot<
-              Map<String, dynamic>> sessionDocument in sessionDocuments) {
+          for (DocumentSnapshot<Map<String, dynamic>> sessionDocument in sessionDocuments) {
             String studentSessionID = sessionDocument.id;
             var sessionData = sessionDocument.data() as Map<String, dynamic>;
             _sessionMap[studentUID] = sessionData['attendanceSession'];
@@ -88,11 +90,29 @@ class _ViewStudentAttendanceSessionState extends State<ViewStudentAttendanceSess
 
             _timeMap[studentUID] = formattedDate;
           }
+
           _isEmpty = false;
           _isLoading = false;
         }
       });
-
+      QuerySnapshot<Map<String, dynamic>> checkLeaveSnapshot = await FirebaseFirestore.instance
+          .collection('attendanceRecord')
+          .doc(recordID)
+          .collection('studentAttendanceList')
+          .doc(studentAttListID).collection('studentAttendanceSession')
+          .where('attendanceStatus', isEqualTo: 'Apply Leave')
+          .get();
+      List<DocumentSnapshot<Map<String, dynamic>>> checkLeaveDocs = checkLeaveSnapshot.docs;
+      if(checkLeaveDocs.isNotEmpty){
+        for (DocumentSnapshot<Map<String, dynamic>> checkLeaveDoc in checkLeaveDocs){
+          var sessionData = checkLeaveDoc.data() as Map<String, dynamic>;
+          setState(() {
+            reason = sessionData['reason'];
+            desc = sessionData['description'];
+            imageURL = sessionData['applyLeave_Image'];
+          });
+        }
+      }
 
     } on FirebaseFirestore catch (error) {
       print(error);
@@ -117,7 +137,7 @@ class _ViewStudentAttendanceSessionState extends State<ViewStudentAttendanceSess
       case 4:
         return Colors.orange;
       case 5:
-        return Colors.teal;
+        return Colors.brown;
       default:
         return Colors.black;
     }
@@ -136,7 +156,7 @@ class _ViewStudentAttendanceSessionState extends State<ViewStudentAttendanceSess
       case 4:
         return 'Leave Early';
       case 5:
-        return 'Sick Leave';
+        return 'Apply Leave';
       default:
         return 'Unknown';
     }
@@ -150,116 +170,113 @@ class _ViewStudentAttendanceSessionState extends State<ViewStudentAttendanceSess
         child: Container(
           height: MediaQuery.of(context).size.height,
           color: Colors.blue.shade100,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Center(
-                  child: SizedBox(
-                    width: MediaQuery.of(context).size.width,
-                    child: Card(
-                      elevation: 4,
-                      margin: const EdgeInsets.all(16),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Current Attendance Status',
-                              style: TextStyle(
-                                fontSize: 18,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Center(
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  child: Card(
+                    elevation: 4,
+                    margin: const EdgeInsets.all(16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Current Attendance Status',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          RichText(
+                            text: TextSpan(
+                              text: 'Student ID: ',
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
+                                color: Colors.black,
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            RichText(
-                              text: TextSpan(
-                                text: 'Student ID: ',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: studentID,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                    ),
+                              children: [
+                                TextSpan(
+                                  text: studentID,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.normal,
                                   ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            RichText(
-                              text: TextSpan(
-                                text: 'Date: ',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
                                 ),
-                                children: [
-                                  TextSpan(
-                                    text: date,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              ],
                             ),
-                            const SizedBox(height: 8),
-                            RichText(
-                              text: TextSpan(
-                                text: 'Time: ',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                          ),
+                          const SizedBox(height: 8),
+                          RichText(
+                            text: TextSpan(
+                              text: 'Date: ',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: date,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.normal,
+                                  ),
                                 ),
-                                children: [
-                                  TextSpan(
-                                    text: time,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              ],
                             ),
-                            const SizedBox(height: 8),
-                            RichText(
-                              text: TextSpan(
-                                text: 'Status: ',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                          ),
+                          const SizedBox(height: 8),
+                          RichText(
+                            text: TextSpan(
+                              text: 'Time: ',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: time,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.normal,
+                                  ),
                                 ),
-                                children: [
-                                  TextSpan(
-                                    text: getStatusString(),
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                      color: getStatusColor(),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 8),
+                          RichText(
+                            text: TextSpan(
+                              text: 'Status: ',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: getStatusString(),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.normal,
+                                    color: getStatusColor(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
-                const Divider(thickness: 3,color: Colors.white,),
-                SizedBox(
-                  height: 200,
-                  child: _isEmpty? _emptySession() :
-                  _isLoading? const Center(child: CircularProgressIndicator(color: Colors.white,))
-                      : _buildMemberListStream(studentAttListID),
-                )
-              ],
-            ),
+              ),
+              const Divider(thickness: 3,color: Colors.white,),
+              Expanded(
+                child: _isEmpty? _emptySession() :
+                _isLoading? const Center(child: CircularProgressIndicator(color: Colors.white,))
+                    : _buildMemberListStream(studentAttListID),
+              )
+            ],
           ),
         ),
       ),
@@ -290,18 +307,55 @@ class _ViewStudentAttendanceSessionState extends State<ViewStudentAttendanceSess
             String status = _statusMap[UID] ?? 'Unknown Status';
             return Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Card(
-                child: ListTile(
-                  // leading: getIconForAttendanceStatus(status),
-                  title: Text(session),
-                  subtitle: Text('Capture At $time'),
-                  trailing: Text(status),
-                ),
+              child: Column(
+                children: [
+                  Card(
+                    child: ListTile(
+                      // leading: getIconForAttendanceStatus(status),
+                      title: Text(session),
+                      subtitle: Text('Capture At $time'),
+                      trailing: Text(status),
+                    ),
+                  ),
+                  if(status == 'Apply Leave')
+                    _applyLeaveSession(),
+                ],
               ),
             );
           },
         );
       },
+    );
+  }
+
+  Widget _applyLeaveSession(){
+    return Padding(
+      padding: EdgeInsets.all(8.0),
+      child: Column(
+        children: [
+          Card(
+            child: ListTile(
+              title: Text('Reason: $reason'),
+              subtitle: desc.trim().isNotEmpty? Text('Description: $desc') : const Text('Description: -'),
+            ),
+          ),
+          if(imageURL.trim().isNotEmpty)
+            Container(
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10)
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Image.network(
+                  imageURL,
+                  height: 500,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 

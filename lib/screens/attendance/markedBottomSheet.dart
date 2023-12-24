@@ -160,6 +160,14 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
           endTime = convertStringToDateTime(attendanceData['endAt']);
           hoursDifference = calculateHoursDifference(startTime, endTime);
 
+          Timestamp createdAtTimestamp = attendanceData['createAt'];
+          DateTime createdAtDate = createdAtTimestamp.toDate();
+          DateTime currentDate = DateTime.now();
+          bool isToday = currentDate.year == createdAtDate.year &&
+              currentDate.month == createdAtDate.month &&
+              currentDate.day == createdAtDate.day;
+
+
           if (hoursDifference <= 1) {
             List<bool> switchValues = List.generate(1, (index) => false);
             List<bool> isSwitchDisabled = List.generate(1, (index) => false);
@@ -260,7 +268,7 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
                           title: const Text('Present'),
                           trailing: Switch(
                             value: switchValues[i],
-                            onChanged: isSwitchDisabled[i] || !isInSelectedArea
+                            onChanged: isSwitchDisabled[i] || !isInSelectedArea || !isToday
                                 ? null // Disable the switch isSwitchDisabled[i] && !isInSelectedArea
                                 : (value) {
                                     setState(() {
@@ -270,7 +278,7 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
                           ),
                         ),
                         ElevatedButton(
-                            onPressed: isSwitchDisabled[i] || !isInSelectedArea
+                            onPressed: isSwitchDisabled[i] || !isInSelectedArea || !isToday
                                 ? null
                                 : () {
                                     _submit(i, fiedStartTime[i], fiedEndTime[i],
@@ -490,117 +498,45 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
         for (DocumentSnapshot<Map<String, dynamic>> document in documents) {
           studentAttListID = document.id;
         }
+        var studentAttCollection = await FirebaseFirestore.instance.collection('attendanceRecord')
+            .doc(recordID).collection('studentAttendanceList').doc(studentAttListID).get();
+        var studentAttData = await studentAttCollection.data() as Map<String, dynamic>;
+        int statusType = studentAttData['attendanceStatus'];
 
-        DateTime startTime = convertStringToDateTime(recordData['startAt']);
-        DateTime endTime = convertStringToDateTime(recordData['endAt']);
-        bool studentAttendanceSessionStatus = switchValues;
-        String attendanceSession = controllers[index].text;
-        int hoursDifferenceSubmit =
-            calculateHoursDifference(startTime, endTime);
+        if(statusType == 0){
+          DateTime startTime = convertStringToDateTime(recordData['startAt']);
+          DateTime endTime = convertStringToDateTime(recordData['endAt']);
+          bool studentAttendanceSessionStatus = switchValues;
+          String attendanceSession = controllers[index].text;
+          int hoursDifferenceSubmit =
+          calculateHoursDifference(startTime, endTime);
 
-        //0=pending 1=Present 2=Absent 3=Late 4=Leave early 5=sick
-        if (index == 0) {
-          //first
-          //check if already captured
-          QuerySnapshot<Map<String, dynamic>> attListQuerySnapshot =
-              await FirebaseFirestore.instance
-                  .collection('attendanceRecord')
-                  .doc(recordID)
-                  .collection('studentAttendanceList')
-                  .doc(studentAttListID)
-                  .collection('studentAttendanceSession')
-                  .where('startAt',
-                      isEqualTo: DateFormat.jm().format(fieldStartTime))
-                  .get();
-          List<DocumentSnapshot<Map<String, dynamic>>> attListDocuments =
-              attListQuerySnapshot.docs;
-          bool docFounded = false;
-          if (attListDocuments.isEmpty) {
-            docFounded = false;
-          } else {
-            docFounded = true;
-          }
-
-          if (!docFounded) {
-            if (fieldStartTime == startTime) {
-              //Present
-              FirebaseFirestore.instance
-                  .collection('attendanceRecord')
-                  .doc(recordID)
-                  .collection('studentAttendanceList')
-                  .doc(studentAttListID)
-                  .collection('studentAttendanceSession')
-                  .add({
-                'recordID': recordID,
-                'studentID': userID,
-                'attendanceSession': attendanceSession,
-                'startAt': DateFormat.jm().format(startTime),
-                'endAt': hoursDifferenceSubmit <= 1 ? DateFormat.jm().format(fieldEndTime) : DateFormat.jm().format(endTime),
-                'attendanceStatus':
-                    studentAttendanceSessionStatus ? 'Present' : 'Absent',
-                'createAt': DateTime.now()
-              }).then((value) {
-                if(hoursDifferenceSubmit <= 1){
-                  FirebaseFirestore.instance
-                      .collection('attendanceRecord')
-                      .doc(recordID)
-                      .collection('studentAttendanceList')
-                      .doc(studentAttListID)
-                      .update({'attendanceStatus': 1});
-                  FirebaseFirestore.instance
-                      .collection('attendanceRecord')
-                      .doc(recordID)
-                      .update({
-                    'markedUser': recordData['markedUser'] + 1,
-                  });
-                }
-              });
+          //0=pending 1=Present 2=Absent 3=Late 4=Leave early 5=sick
+          if (index == 0) {
+            //first
+            //check if already captured
+            QuerySnapshot<Map<String, dynamic>> attListQuerySnapshot =
+            await FirebaseFirestore.instance
+                .collection('attendanceRecord')
+                .doc(recordID)
+                .collection('studentAttendanceList')
+                .doc(studentAttListID)
+                .collection('studentAttendanceSession')
+                .where('startAt',
+                isEqualTo: DateFormat.jm().format(fieldStartTime))
+                .get();
+            List<DocumentSnapshot<Map<String, dynamic>>> attListDocuments =
+                attListQuerySnapshot.docs;
+            bool docFounded = false;
+            if (attListDocuments.isEmpty) {
+              docFounded = false;
+            } else {
+              docFounded = true;
             }
-          } else {
-            setState(() {
-              var snackBar = const SnackBar(
-                content: Text('Attendance Session Already Saved!'),
-                behavior: SnackBarBehavior.floating,
-              );
-              ScaffoldMessenger.of(context).showSnackBar(snackBar);
-            });
-            return;
-          }
-        } else if (index == hoursDifferenceSubmit - 1) {
-          QuerySnapshot<Map<String, dynamic>> checkAttListQuerySnapshot =
-              await FirebaseFirestore.instance
-                  .collection('attendanceRecord')
-                  .doc(recordID)
-                  .collection('studentAttendanceList')
-                  .doc(studentAttListID)
-                  .collection('studentAttendanceSession')
-                  .where('endAt',
-                      isEqualTo: DateFormat.jm().format(fieldEndTime))
-                  .get();
-          List<DocumentSnapshot<Map<String, dynamic>>> checkAttListDocuments =
-              checkAttListQuerySnapshot.docs;
-          bool docFounded = false;
-          if (checkAttListDocuments.isEmpty) {
-            docFounded = false;
-          } else {
-            docFounded = true;
-          }
-          //last
-          if (!docFounded) {
-            if (fieldEndTime == endTime) {
-              //check previous record
-              QuerySnapshot<Map<String, dynamic>> attListQuerySnapshot =
-                  await FirebaseFirestore.instance
-                      .collection('attendanceRecord')
-                      .doc(recordID)
-                      .collection('studentAttendanceList')
-                      .doc(studentAttListID)
-                      .collection('studentAttendanceSession')
-                      .get();
-              List<DocumentSnapshot<Map<String, dynamic>>> attListDocuments =
-                  attListQuerySnapshot.docs;
-              if (attListDocuments.length == hoursDifference - 1) {
-                //all record saved = Present
+
+            if (!docFounded) {
+              if (fieldStartTime == startTime) {
+                //Present
                 FirebaseFirestore.instance
                     .collection('attendanceRecord')
                     .doc(recordID)
@@ -611,26 +547,175 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
                   'recordID': recordID,
                   'studentID': userID,
                   'attendanceSession': attendanceSession,
-                  'startAt': DateFormat.jm().format(fieldStartTime),
-                  'endAt': DateFormat.jm().format(endTime),
+                  'startAt': DateFormat.jm().format(startTime),
+                  'endAt': hoursDifferenceSubmit <= 1 ? DateFormat.jm().format(fieldEndTime) : DateFormat.jm().format(endTime),
                   'attendanceStatus':
-                      studentAttendanceSessionStatus ? 'Present' : 'Absent',
+                  studentAttendanceSessionStatus ? 'Present' : 'Absent',
                   'createAt': DateTime.now()
                 }).then((value) {
+                  if(hoursDifferenceSubmit <= 1){
+                    FirebaseFirestore.instance
+                        .collection('attendanceRecord')
+                        .doc(recordID)
+                        .collection('studentAttendanceList')
+                        .doc(studentAttListID)
+                        .update({'attendanceStatus': 1});
+                    FirebaseFirestore.instance
+                        .collection('attendanceRecord')
+                        .doc(recordID)
+                        .update({
+                      'markedUser': recordData['markedUser'] + 1,
+                    });
+                  }
+                });
+              }
+            } else {
+              setState(() {
+                var snackBar = const SnackBar(
+                  content: Text('Attendance Session Already Saved!'),
+                  behavior: SnackBarBehavior.floating,
+                );
+                ScaffoldMessenger.of(context).showSnackBar(snackBar);
+              });
+              return;
+            }
+          } else if (index == hoursDifferenceSubmit - 1) {
+            QuerySnapshot<Map<String, dynamic>> checkAttListQuerySnapshot =
+            await FirebaseFirestore.instance
+                .collection('attendanceRecord')
+                .doc(recordID)
+                .collection('studentAttendanceList')
+                .doc(studentAttListID)
+                .collection('studentAttendanceSession')
+                .where('endAt',
+                isEqualTo: DateFormat.jm().format(fieldEndTime))
+                .get();
+            List<DocumentSnapshot<Map<String, dynamic>>> checkAttListDocuments =
+                checkAttListQuerySnapshot.docs;
+            bool docFounded = false;
+            if (checkAttListDocuments.isEmpty) {
+              docFounded = false;
+            } else {
+              docFounded = true;
+            }
+            //last
+            if (!docFounded) {
+              if (fieldEndTime == endTime) {
+                //check previous record
+                QuerySnapshot<Map<String, dynamic>> attListQuerySnapshot =
+                await FirebaseFirestore.instance
+                    .collection('attendanceRecord')
+                    .doc(recordID)
+                    .collection('studentAttendanceList')
+                    .doc(studentAttListID)
+                    .collection('studentAttendanceSession')
+                    .get();
+                List<DocumentSnapshot<Map<String, dynamic>>> attListDocuments =
+                    attListQuerySnapshot.docs;
+                if (attListDocuments.length == hoursDifference - 1) {
+                  //all record saved = Present
                   FirebaseFirestore.instance
                       .collection('attendanceRecord')
                       .doc(recordID)
                       .collection('studentAttendanceList')
                       .doc(studentAttListID)
-                      .update({'attendanceStatus': 1});
+                      .collection('studentAttendanceSession')
+                      .add({
+                    'recordID': recordID,
+                    'studentID': userID,
+                    'attendanceSession': attendanceSession,
+                    'startAt': DateFormat.jm().format(fieldStartTime),
+                    'endAt': DateFormat.jm().format(endTime),
+                    'attendanceStatus':
+                    studentAttendanceSessionStatus ? 'Present' : 'Absent',
+                    'createAt': DateTime.now()
+                  }).then((value) {
+                    FirebaseFirestore.instance
+                        .collection('attendanceRecord')
+                        .doc(recordID)
+                        .collection('studentAttendanceList')
+                        .doc(studentAttListID)
+                        .update({'attendanceStatus': 1});
+                    FirebaseFirestore.instance
+                        .collection('attendanceRecord')
+                        .doc(recordID)
+                        .update({
+                      'markedUser': recordData['markedUser'] + 1,
+                    });
+                  });
+                } else {
+                  //late
                   FirebaseFirestore.instance
                       .collection('attendanceRecord')
                       .doc(recordID)
-                      .update({
-                    'markedUser': recordData['markedUser'] + 1,
+                      .collection('studentAttendanceList')
+                      .doc(studentAttListID)
+                      .collection('studentAttendanceSession')
+                      .add({
+                    'recordID': recordID,
+                    'studentID': userID,
+                    'attendanceSession': attendanceSession,
+                    'startAt': DateFormat.jm().format(fieldStartTime),
+                    'endAt': DateFormat.jm().format(fieldEndTime),
+                    'attendanceStatus':
+                    studentAttendanceSessionStatus ? 'Present' : 'Absent',
+                    'createAt': DateTime.now()
+                  }).then((value) {
+                    FirebaseFirestore.instance
+                        .collection('attendanceRecord')
+                        .doc(recordID)
+                        .collection('studentAttendanceList')
+                        .doc(studentAttListID)
+                        .update({'attendanceStatus': 3});
                   });
-                });
-              } else {
+                }
+              }
+            } else {
+              setState(() {
+                var snackBar = const SnackBar(
+                  content: Text('Attendance Session Already Saved!'),
+                  behavior: SnackBarBehavior.floating,
+                );
+                ScaffoldMessenger.of(context).showSnackBar(snackBar);
+              });
+              return;
+            }
+          } else {
+            // remaining
+            QuerySnapshot<Map<String, dynamic>> checkAttListQuerySnapshot =
+            await FirebaseFirestore.instance
+                .collection('attendanceRecord')
+                .doc(recordID)
+                .collection('studentAttendanceList')
+                .doc(studentAttListID)
+                .collection('studentAttendanceSession')
+                .where('startAt',
+                isEqualTo: DateFormat.jm().format(fieldStartTime))
+                .get();
+            List<DocumentSnapshot<Map<String, dynamic>>> checkAttListDocuments =
+                checkAttListQuerySnapshot.docs;
+            bool docFounded = false;
+            if (checkAttListDocuments.isEmpty) {
+              docFounded = false;
+            } else {
+              docFounded = true;
+            }
+            //check if late
+            QuerySnapshot<Map<String, dynamic>> attListQuerySnapshot =
+            await FirebaseFirestore.instance
+                .collection('attendanceRecord')
+                .doc(recordID)
+                .collection('studentAttendanceList')
+                .doc(studentAttListID)
+                .collection('studentAttendanceSession')
+                .where('startAt',
+                isEqualTo: DateFormat.jm().format(startTime))
+                .get();
+            List<DocumentSnapshot<Map<String, dynamic>>> attListDocuments =
+                attListQuerySnapshot.docs;
+
+            if (!docFounded) {
+              if (attListDocuments.isEmpty) {
                 //late
                 FirebaseFirestore.instance
                     .collection('attendanceRecord')
@@ -645,7 +730,7 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
                   'startAt': DateFormat.jm().format(fieldStartTime),
                   'endAt': DateFormat.jm().format(fieldEndTime),
                   'attendanceStatus':
-                      studentAttendanceSessionStatus ? 'Present' : 'Absent',
+                  studentAttendanceSessionStatus ? 'Present' : 'Absent',
                   'createAt': DateTime.now()
                 }).then((value) {
                   FirebaseFirestore.instance
@@ -655,107 +740,45 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
                       .doc(studentAttListID)
                       .update({'attendanceStatus': 3});
                 });
-              }
-            }
-          } else {
-            setState(() {
-              var snackBar = const SnackBar(
-                content: Text('Attendance Session Already Saved!'),
-                behavior: SnackBarBehavior.floating,
-              );
-              ScaffoldMessenger.of(context).showSnackBar(snackBar);
-            });
-            return;
-          }
-        } else {
-          // remaining
-          QuerySnapshot<Map<String, dynamic>> checkAttListQuerySnapshot =
-              await FirebaseFirestore.instance
-                  .collection('attendanceRecord')
-                  .doc(recordID)
-                  .collection('studentAttendanceList')
-                  .doc(studentAttListID)
-                  .collection('studentAttendanceSession')
-                  .where('startAt',
-                      isEqualTo: DateFormat.jm().format(fieldStartTime))
-                  .get();
-          List<DocumentSnapshot<Map<String, dynamic>>> checkAttListDocuments =
-              checkAttListQuerySnapshot.docs;
-          bool docFounded = false;
-          if (checkAttListDocuments.isEmpty) {
-            docFounded = false;
-          } else {
-            docFounded = true;
-          }
-          //check if late
-          QuerySnapshot<Map<String, dynamic>> attListQuerySnapshot =
-              await FirebaseFirestore.instance
-                  .collection('attendanceRecord')
-                  .doc(recordID)
-                  .collection('studentAttendanceList')
-                  .doc(studentAttListID)
-                  .collection('studentAttendanceSession')
-                  .where('startAt',
-                      isEqualTo: DateFormat.jm().format(startTime))
-                  .get();
-          List<DocumentSnapshot<Map<String, dynamic>>> attListDocuments =
-              attListQuerySnapshot.docs;
-
-          if (!docFounded) {
-            if (attListDocuments.isEmpty) {
-              //late
-              FirebaseFirestore.instance
-                  .collection('attendanceRecord')
-                  .doc(recordID)
-                  .collection('studentAttendanceList')
-                  .doc(studentAttListID)
-                  .collection('studentAttendanceSession')
-                  .add({
-                'recordID': recordID,
-                'studentID': userID,
-                'attendanceSession': attendanceSession,
-                'startAt': DateFormat.jm().format(fieldStartTime),
-                'endAt': DateFormat.jm().format(fieldEndTime),
-                'attendanceStatus':
-                    studentAttendanceSessionStatus ? 'Present' : 'Absent',
-                'createAt': DateTime.now()
-              }).then((value) {
+              } else {
+                //not late
                 FirebaseFirestore.instance
                     .collection('attendanceRecord')
                     .doc(recordID)
                     .collection('studentAttendanceList')
                     .doc(studentAttListID)
-                    .update({'attendanceStatus': 3});
-              });
+                    .collection('studentAttendanceSession')
+                    .add({
+                  'recordID': recordID,
+                  'studentID': userID,
+                  'attendanceSession': attendanceSession,
+                  'startAt': DateFormat.jm().format(fieldStartTime),
+                  'endAt': DateFormat.jm().format(fieldEndTime),
+                  'attendanceStatus':
+                  studentAttendanceSessionStatus ? 'Present' : 'Absent',
+                  'createAt': DateTime.now()
+                });
+              }
             } else {
-              //not late
-              FirebaseFirestore.instance
-                  .collection('attendanceRecord')
-                  .doc(recordID)
-                  .collection('studentAttendanceList')
-                  .doc(studentAttListID)
-                  .collection('studentAttendanceSession')
-                  .add({
-                'recordID': recordID,
-                'studentID': userID,
-                'attendanceSession': attendanceSession,
-                'startAt': DateFormat.jm().format(fieldStartTime),
-                'endAt': DateFormat.jm().format(fieldEndTime),
-                'attendanceStatus':
-                    studentAttendanceSessionStatus ? 'Present' : 'Absent',
-                'createAt': DateTime.now()
+              setState(() {
+                var snackBar = const SnackBar(
+                  content: Text('Attendance Session Already Saved!'),
+                  behavior: SnackBarBehavior.floating,
+                );
+                ScaffoldMessenger.of(context).showSnackBar(snackBar);
               });
+              return;
             }
-          } else {
-            setState(() {
-              var snackBar = const SnackBar(
-                content: Text('Attendance Session Already Saved!'),
-                behavior: SnackBarBehavior.floating,
-              );
-              ScaffoldMessenger.of(context).showSnackBar(snackBar);
-            });
-            return;
           }
+        }else{
+          setState(() {
+            var snackBar = const SnackBar(
+              content: Text('Attendance Session Already Captured As On-Leave !'),
+              behavior: SnackBarBehavior.floating,
+            );
+            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+          });
+          return;
         }
       }
 
@@ -839,7 +862,7 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
                   Column(
                     children: textFields,
                   ),
-                  ElevatedButton(onPressed: _authenticate, child: Text('AUTH'))
+                  // ElevatedButton(onPressed: _authenticate, child: Text('AUTH'))
                 ],
               ),
             ),

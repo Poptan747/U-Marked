@@ -51,6 +51,7 @@ dependencies:
   geolocator: ^10.1.0
   maps_toolkit: ^3.0.0
   local_auth: ^2.1.7
+  excel: ^4.0.0
 
 dev_dependencies:
   flutter_test:

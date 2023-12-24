@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:u_marked/reusable_widget/appBar.dart';
+import 'package:u_marked/screens/attendance/applyLeave.dart';
 import 'package:u_marked/screens/attendance/markedBottomSheet.dart';
 import 'package:u_marked/screens/attendance/studentAttendanceList.dart';
 import 'package:u_marked/screens/attendance/viewMyAttendanceSession.dart';
@@ -22,6 +23,7 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> {
   String geofencingType = '';
   String time = '';
   String date = '';
+  String studentAttID = '';
   String totalAttendanceMember = '';
   int totalMarkedUsers = 0;
   GoogleMapController? mapController;
@@ -209,7 +211,9 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 40,),
+                  const SizedBox(height: 20,),
+                  const Divider(color: Colors.white,thickness: 5,),
+                  const SizedBox(height: 20,),
                   GridView.count(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -223,6 +227,8 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> {
                         itemDashboard('Capture Attendances', CupertinoIcons.check_mark_circled, Colors.green, 2),
                       if(widget.isStudent)
                         itemDashboard('View My Attendance Session', CupertinoIcons.search, Colors.blue, 3),
+                      if(widget.isStudent)
+                        itemDashboard('Apply Leave', Icons.edit_document, Colors.red, 4),
                     ],
                   )
                 ],
@@ -246,16 +252,18 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> {
           break;
         case 2:
           _showMarkedBottomSheet(context,widget.attendanceRecordID);
-        //   Navigator.of(context).push(
-        //     MaterialPageRoute(
-        //       builder: (context) => attendanceWidget(isStudent: widget.isStudent,classID: widget.classID),
-        //     ),
-        //   );
           break;
         case 3 :
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => ViewMyAttendanceSessionPage(isStudent: widget.isStudent, attendanceRecordID: widget.attendanceRecordID, date: date, time: time,),
+            ),
+          );
+          break;
+        case 4 :
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ApplyLeavePage(attendanceRecordID: widget.attendanceRecordID,)
             ),
           );
           break;

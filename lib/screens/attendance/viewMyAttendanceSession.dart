@@ -21,6 +21,9 @@ class _ViewMyAttendanceSessionPageState extends State<ViewMyAttendanceSessionPag
   int status = 10;
   bool _isLoading = true;
   bool _isEmpty = true;
+  String reason = '';
+  String desc = '';
+  String imageURL = '';
   var _sessionMap = <String, String>{};
   var _statusMap = <String, String>{};
   var _timeMap = <String, String>{};
@@ -70,9 +73,7 @@ class _ViewMyAttendanceSessionPageState extends State<ViewMyAttendanceSessionPag
         var studentAttLisCollection = await FirebaseFirestore.instance
             .collection('attendanceRecord').doc(recordID)
             .collection('studentAttendanceList').doc(studentAttListDocID).get();
-        var studentAttData = await studentAttLisCollection.data() as Map<
-            String,
-            dynamic>;
+        var studentAttData = await studentAttLisCollection.data() as Map<String, dynamic>;
 
         // student att session list
         QuerySnapshot<Map<String, dynamic>> sessionQuerySnapshot =
@@ -106,9 +107,29 @@ class _ViewMyAttendanceSessionPageState extends State<ViewMyAttendanceSessionPag
 
               _timeMap[studentSessionID] = formattedDate;
             }
-            _isEmpty = false;
-            _isLoading = false;
           }
+        });
+        QuerySnapshot<Map<String, dynamic>> checkLeaveSnapshot = await FirebaseFirestore.instance
+            .collection('attendanceRecord')
+            .doc(recordID)
+            .collection('studentAttendanceList')
+            .doc(studentAttListDocID).collection('studentAttendanceSession')
+            .where('attendanceStatus', isEqualTo: 'Apply Leave')
+            .get();
+        List<DocumentSnapshot<Map<String, dynamic>>> checkLeaveDocs = checkLeaveSnapshot.docs;
+        if(checkLeaveDocs.isNotEmpty){
+          for (DocumentSnapshot<Map<String, dynamic>> checkLeaveDoc in checkLeaveDocs){
+            var sessionData = checkLeaveDoc.data() as Map<String, dynamic>;
+            setState(() {
+              reason = sessionData['reason'];
+              desc = sessionData['description'];
+              imageURL = sessionData['applyLeave_Image'];
+            });
+          }
+        }
+        setState(() {
+          _isEmpty = false;
+          _isLoading = false;
         });
       } else {
         setState(() {
@@ -139,7 +160,7 @@ class _ViewMyAttendanceSessionPageState extends State<ViewMyAttendanceSessionPag
       case 4:
         return Colors.orange;
       case 5:
-        return Colors.teal;
+        return Colors.brown;
       default:
         return Colors.black;
     }
@@ -158,7 +179,7 @@ class _ViewMyAttendanceSessionPageState extends State<ViewMyAttendanceSessionPag
       case 4:
         return 'Leave Early';
       case 5:
-        return 'Sick Leave';
+        return 'Apply Leave';
       default:
         return 'Unknown';
     }
@@ -172,116 +193,113 @@ class _ViewMyAttendanceSessionPageState extends State<ViewMyAttendanceSessionPag
         child: Container(
           height: MediaQuery.of(context).size.height,
           color: Colors.blue.shade100,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Center(
-                  child: SizedBox(
-                    width: MediaQuery.of(context).size.width,
-                    child: Card(
-                      elevation: 4,
-                      margin: const EdgeInsets.all(16),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Current Attendance Status',
-                              style: TextStyle(
-                                fontSize: 18,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Center(
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  child: Card(
+                    elevation: 4,
+                    margin: const EdgeInsets.all(16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Current Attendance Status',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          RichText(
+                            text: TextSpan(
+                              text: 'Student ID: ',
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
+                                color: Colors.black,
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            RichText(
-                              text: TextSpan(
-                                text: 'Student ID: ',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: studentID,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                    ),
+                              children: [
+                                TextSpan(
+                                  text: studentID,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.normal,
                                   ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            RichText(
-                              text: TextSpan(
-                                text: 'Date: ',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
                                 ),
-                                children: [
-                                  TextSpan(
-                                    text: widget.date,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              ],
                             ),
-                            const SizedBox(height: 8),
-                            RichText(
-                              text: TextSpan(
-                                text: 'Time: ',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                          ),
+                          const SizedBox(height: 8),
+                          RichText(
+                            text: TextSpan(
+                              text: 'Date: ',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: widget.date,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.normal,
+                                  ),
                                 ),
-                                children: [
-                                  TextSpan(
-                                    text: widget.time,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              ],
                             ),
-                            const SizedBox(height: 8),
-                            RichText(
-                              text: TextSpan(
-                                text: 'Status: ',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                          ),
+                          const SizedBox(height: 8),
+                          RichText(
+                            text: TextSpan(
+                              text: 'Time: ',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: widget.time,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.normal,
+                                  ),
                                 ),
-                                children: [
-                                  TextSpan(
-                                    text: getStatusString(),
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.normal,
-                                        color: getStatusColor(),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 8),
+                          RichText(
+                            text: TextSpan(
+                              text: 'Status: ',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: getStatusString(),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.normal,
+                                      color: getStatusColor(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
-                const Divider(thickness: 3,color: Colors.white,),
-                SizedBox(
-                  height: 200,
-                  child: _isEmpty? _emptySession() :
-                  _isLoading? const Center(child: CircularProgressIndicator(color: Colors.white,))
-                      : _buildMemberListStream(studentAttListID),
-                )
-              ],
-            ),
+              ),
+              const Divider(thickness: 3,color: Colors.white,),
+              Expanded(
+                child: _isEmpty? _emptySession() :
+                _isLoading? const Center(child: CircularProgressIndicator(color: Colors.white,))
+                    : _buildMemberListStream(studentAttListID),
+              )
+            ],
           ),
         ),
       ),
@@ -309,18 +327,55 @@ class _ViewMyAttendanceSessionPageState extends State<ViewMyAttendanceSessionPag
             String status = _statusMap[stuAttRecord] ?? 'Unknown Status';
             return Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Card(
-                child: ListTile(
-                  // leading: getIconForAttendanceStatus(status),
-                  title: Text(session),
-                  subtitle: Text('Capture At $time'),
-                  trailing: Text(status),
-                ),
+              child: Column(
+                children: [
+                  Card(
+                    child: ListTile(
+                      // leading: getIconForAttendanceStatus(status),
+                      title: Text(session),
+                      subtitle: Text('Capture At $time'),
+                      trailing: Text(status),
+                    ),
+                  ),
+                  if(status == 'Apply Leave')
+                    _applyLeaveSession(),
+                ],
               ),
             );
           },
         );
       },
+    );
+  }
+
+  Widget _applyLeaveSession(){
+    return Padding(
+      padding: EdgeInsets.all(8.0),
+      child: Column(
+        children: [
+          Card(
+            child: ListTile(
+              title: Text('Reason: $reason'),
+              subtitle: desc.trim().isNotEmpty? Text('Description: $desc') : const Text('Description: -'),
+            ),
+          ),
+          if(imageURL.trim().isNotEmpty)
+          Container(
+            decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10)
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Image.network(
+                imageURL,
+                height: 500,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
