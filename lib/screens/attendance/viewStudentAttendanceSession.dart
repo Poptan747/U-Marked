@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:getwidget/components/button/gf_button.dart';
+import 'package:getwidget/getwidget.dart';
 import 'package:intl/intl.dart';
 import 'package:u_marked/reusable_widget/appBar.dart';
 
@@ -137,7 +139,11 @@ class _ViewStudentAttendanceSessionState extends State<ViewStudentAttendanceSess
       case 4:
         return Colors.orange;
       case 5:
-        return Colors.brown;
+        return Colors.brown; // leave pending
+      case 6:
+        return Colors.green;// approve
+      case 7:
+        return Colors.red;// decline
       default:
         return Colors.black;
     }
@@ -156,9 +162,129 @@ class _ViewStudentAttendanceSessionState extends State<ViewStudentAttendanceSess
       case 4:
         return 'Leave Early';
       case 5:
-        return 'Apply Leave';
+        return 'Apply Leave - Pending';
+      case 6:
+        return 'Apply Leave - Approve';// approve
+      case 7:
+        return '(Absent) Apply Leave - Pending';
       default:
         return 'Unknown';
+    }
+  }
+
+  _approveLeave() async{
+    String recordID = widget.attRecordID;
+    String studentAttID = widget.studentAttListID;
+
+    var studentAttendanceCollection = await FirebaseFirestore.instance
+        .collection('attendanceRecord').doc(recordID).collection('studentAttendanceList').doc(studentAttID).get();
+    var studentAttendanceData = await studentAttendanceCollection.data() as Map<String, dynamic>;
+
+    //0=pending 1=Present 2=Absent 3=Late 4=Leave early 5=Apply leave 6=Leave Approve 7=Leave absent
+    if(studentAttendanceData['attendanceStatus'] == 5 || studentAttendanceData['attendanceStatus'] == 7){
+      FirebaseFirestore.instance
+          .collection('attendanceRecord')
+          .doc(recordID)
+          .collection('studentAttendanceList')
+          .doc(studentAttID)
+          .update({'attendanceStatus': 6});
+
+      QuerySnapshot<Map<String, dynamic>> checkLeaveSnapshot = await FirebaseFirestore.instance
+          .collection('attendanceRecord')
+          .doc(recordID)
+          .collection('studentAttendanceList')
+          .doc(studentAttID).collection('studentAttendanceSession')
+          .where('attendanceStatus', isEqualTo: 'Apply Leave')
+          .get();
+      List<DocumentSnapshot<Map<String, dynamic>>> checkLeaveDocs = checkLeaveSnapshot.docs;
+      if(checkLeaveDocs.isNotEmpty){
+        for (DocumentSnapshot<Map<String, dynamic>> checkLeaveDoc in checkLeaveDocs){
+          var sessionData = checkLeaveDoc.data() as Map<String, dynamic>;
+          String reason = sessionData['reason'];
+          String approved = ' (Approved)';
+          FirebaseFirestore.instance
+              .collection('attendanceRecord')
+              .doc(recordID)
+              .collection('studentAttendanceList')
+              .doc(studentAttID).collection('studentAttendanceSession').doc(checkLeaveDoc.id)
+              .update({'reason' : reason + approved});
+        }
+      }
+
+      setState(() {
+        var snackBar = const SnackBar(
+          content: Text('Leave Request has been approved'),
+          behavior: SnackBarBehavior.floating,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      });
+    }else{
+      setState(() {
+        var snackBar = const SnackBar(
+          content: Text('Leave Request Already Saved!'),
+          behavior: SnackBarBehavior.floating,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      });
+      return;
+    }
+  }
+
+  _declineLeave() async{
+    String recordID = widget.attRecordID;
+    String studentAttID = widget.studentAttListID;
+
+    var studentAttendanceCollection = await FirebaseFirestore.instance
+        .collection('attendanceRecord').doc(recordID).collection('studentAttendanceList').doc(studentAttID).get();
+    var studentAttendanceData = await studentAttendanceCollection.data() as Map<String, dynamic>;
+
+    //0=pending 1=Present 2=Absent 3=Late 4=Leave early 5=Apply leave 6=Leave Approve 7=Leave absent
+    if(studentAttendanceData['attendanceStatus'] == 5 || studentAttendanceData['attendanceStatus'] == 7){
+      FirebaseFirestore.instance
+          .collection('attendanceRecord')
+          .doc(recordID)
+          .collection('studentAttendanceList')
+          .doc(studentAttListID)
+          .update({'attendanceStatus': studentAttendanceData['attendanceStatus'] == 7 ? 2 : 0});
+
+      QuerySnapshot<Map<String, dynamic>> checkLeaveSnapshot = await FirebaseFirestore.instance
+          .collection('attendanceRecord')
+          .doc(recordID)
+          .collection('studentAttendanceList')
+          .doc(studentAttID).collection('studentAttendanceSession')
+          .where('attendanceStatus', isEqualTo: 'Apply Leave')
+          .get();
+      List<DocumentSnapshot<Map<String, dynamic>>> checkLeaveDocs = checkLeaveSnapshot.docs;
+      if(checkLeaveDocs.isNotEmpty){
+        for (DocumentSnapshot<Map<String, dynamic>> checkLeaveDoc in checkLeaveDocs){
+          var sessionData = checkLeaveDoc.data() as Map<String, dynamic>;
+          String reason = sessionData['reason'];
+          String approved = ' (Declined)';
+          FirebaseFirestore.instance
+              .collection('attendanceRecord')
+              .doc(recordID)
+              .collection('studentAttendanceList')
+              .doc(studentAttID).collection('studentAttendanceSession').doc(checkLeaveDoc.id)
+              .update({'reason' : reason + approved});
+        }
+      }
+
+      setState(() {
+        var snackBar = const SnackBar(
+          content: Text('Leave Request has been decline'),
+          behavior: SnackBarBehavior.floating,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      });
+    }else{
+      setState(() {
+        var snackBar = const SnackBar(
+          content: Text('Leave Request Already Saved!'),
+          behavior: SnackBarBehavior.floating,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      });
+      return;
     }
   }
 
@@ -245,7 +371,7 @@ class _ViewStudentAttendanceSessionState extends State<ViewStudentAttendanceSess
                               ],
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
                           RichText(
                             text: TextSpan(
                               text: 'Status: ',
@@ -254,11 +380,17 @@ class _ViewStudentAttendanceSessionState extends State<ViewStudentAttendanceSess
                                 color: Colors.black,
                               ),
                               children: [
+                                const TextSpan(text: '   '),
                                 TextSpan(
                                   text: getStatusString(),
                                   style: TextStyle(
                                     fontWeight: FontWeight.normal,
-                                    color: getStatusColor(),
+                                    color: Colors.white,
+                                      background: Paint()
+                                        ..strokeWidth = 20.0
+                                        ..color = getStatusColor()
+                                        ..style = PaintingStyle.stroke
+                                        ..strokeJoin = StrokeJoin.round
                                   ),
                                 ),
                               ],
@@ -331,30 +463,50 @@ class _ViewStudentAttendanceSessionState extends State<ViewStudentAttendanceSess
   Widget _applyLeaveSession(){
     return Padding(
       padding: EdgeInsets.all(8.0),
-      child: Column(
-        children: [
-          Card(
-            child: ListTile(
+      child: Card(
+        child: Column(
+          children: [
+            ListTile(
               title: Text('Reason: $reason'),
               subtitle: desc.trim().isNotEmpty? Text('Description: $desc') : const Text('Description: -'),
             ),
-          ),
-          if(imageURL.trim().isNotEmpty)
-            Container(
-              decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10)
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Image.network(
-                  imageURL,
-                  height: 500,
-                  fit: BoxFit.contain,
+            if(imageURL.trim().isNotEmpty)
+              Container(
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10)
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Image.network(
+                    imageURL,
+                    height: 500,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
-            ),
-        ],
+            const SizedBox(height: 10,),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                GFButton(
+                    onPressed: _approveLeave,
+                    shape: GFButtonShape.pills,
+                    color: GFColors.SUCCESS,
+                    size: GFSize.LARGE,
+                    child: const Text('Approve')
+                ),
+                GFButton(
+                    onPressed: _declineLeave,
+                    shape: GFButtonShape.pills,
+                    color: GFColors.DANGER,
+                    size: GFSize.LARGE,
+                    child: const Text('Decline')
+                ),
+              ],
+            )
+          ],
+        ),
       ),
     );
   }

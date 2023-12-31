@@ -93,6 +93,7 @@ class _ViewMyAttendanceSessionPageState extends State<ViewMyAttendanceSessionPag
             _isEmpty = true;
             _isLoading = false;
           } else {
+            _isEmpty = false;
             studentAttListID = studentAttListDocID;
             for (DocumentSnapshot<
                 Map<String, dynamic>> sessionDocument in sessionDocuments) {
@@ -128,11 +129,11 @@ class _ViewMyAttendanceSessionPageState extends State<ViewMyAttendanceSessionPag
           }
         }
         setState(() {
-          _isEmpty = false;
           _isLoading = false;
         });
       } else {
         setState(() {
+          _isEmpty = true;
           _isLoading = false;
         });
       }
@@ -160,7 +161,11 @@ class _ViewMyAttendanceSessionPageState extends State<ViewMyAttendanceSessionPag
       case 4:
         return Colors.orange;
       case 5:
-        return Colors.brown;
+        return Colors.brown; // leave pending
+      case 6:
+        return Colors.green;// approve
+      case 7:
+        return Colors.red;// decline
       default:
         return Colors.black;
     }
@@ -179,7 +184,11 @@ class _ViewMyAttendanceSessionPageState extends State<ViewMyAttendanceSessionPag
       case 4:
         return 'Leave Early';
       case 5:
-        return 'Apply Leave';
+        return 'Apply Leave - Pending';
+      case 6:
+        return 'Apply Leave - Approve';// approve
+      case 7:
+        return '(Absent) Apply Leave - Pending';
       default:
         return 'Unknown';
     }
@@ -268,7 +277,7 @@ class _ViewMyAttendanceSessionPageState extends State<ViewMyAttendanceSessionPag
                               ],
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
                           RichText(
                             text: TextSpan(
                               text: 'Status: ',
@@ -277,11 +286,17 @@ class _ViewMyAttendanceSessionPageState extends State<ViewMyAttendanceSessionPag
                                 color: Colors.black,
                               ),
                               children: [
+                                const TextSpan(text: '   '),
                                 TextSpan(
                                   text: getStatusString(),
                                   style: TextStyle(
                                     fontWeight: FontWeight.normal,
-                                      color: getStatusColor(),
+                                      color: Colors.white,
+                                      background: Paint()
+                                        ..strokeWidth = 20.0
+                                        ..color = getStatusColor()
+                                        ..style = PaintingStyle.stroke
+                                        ..strokeJoin = StrokeJoin.round
                                   ),
                                 ),
                               ],
@@ -295,8 +310,8 @@ class _ViewMyAttendanceSessionPageState extends State<ViewMyAttendanceSessionPag
               ),
               const Divider(thickness: 3,color: Colors.white,),
               Expanded(
-                child: _isEmpty? _emptySession() :
-                _isLoading? const Center(child: CircularProgressIndicator(color: Colors.white,))
+                child: _isLoading? const Center(child: CircularProgressIndicator(color: Colors.white,)) :
+                _isEmpty? _emptySession()
                     : _buildMemberListStream(studentAttListID),
               )
             ],
@@ -315,7 +330,7 @@ class _ViewMyAttendanceSessionPageState extends State<ViewMyAttendanceSessionPag
           return const Center(child: Text('Loading....',style: TextStyle(color: Colors.white),));
         }
         if(orderSnapshot.hasError){
-          print(orderSnapshot.error);
+          print('Error here: ${orderSnapshot.error}');
         }
         return ListView.builder(
           itemCount: orderSnapshot.data!.docs.length,

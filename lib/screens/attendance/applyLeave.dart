@@ -53,7 +53,27 @@ class _ApplyLeavePageState extends State<ApplyLeavePage> {
     var studentAttData = await studentAttCollection.data() as Map<String, dynamic>;
     int statusType = studentAttData['attendanceStatus'];
 
-    if(statusType == 0){
+    if(statusType == 0 || statusType == 2){
+
+      QuerySnapshot<Map<String, dynamic>> checkLeaveSnapshot = await FirebaseFirestore.instance
+          .collection('attendanceRecord')
+          .doc(recordID)
+          .collection('studentAttendanceList')
+          .doc(studentAttListID).collection('studentAttendanceSession')
+          .where('attendanceStatus', isEqualTo: 'Apply Leave')
+          .get();
+      List<DocumentSnapshot<Map<String, dynamic>>> checkLeaveDocs = checkLeaveSnapshot.docs;
+      if(checkLeaveDocs.isNotEmpty){
+        setState(() {
+          var snackBar = const SnackBar(
+            content: Text('A Leave has already been apply'),
+            behavior: SnackBarBehavior.floating,
+          );
+          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        });
+        return;
+      }
+
       String reason = '';
       if(_selectedReason =='Other'){
         reason = _otherReasonController.text;
@@ -69,7 +89,7 @@ class _ApplyLeavePageState extends State<ApplyLeavePage> {
       String attendanceSession = '$startAt - $endAt';
 
       FirebaseFirestore.instance.collection('attendanceRecord').doc(recordID).collection('studentAttendanceList')
-          .doc(studentAttListID).update({'attendanceStatus': 5,});
+          .doc(studentAttListID).update({'attendanceStatus': statusType == 2? 7:5,});
       FirebaseFirestore.instance
           .collection('attendanceRecord')
           .doc(recordID)

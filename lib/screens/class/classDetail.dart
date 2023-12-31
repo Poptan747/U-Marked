@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +10,9 @@ import 'package:u_marked/screens/attendance/attendance.dart';
 import 'package:u_marked/screens/class/memberList.dart';
 import 'package:u_marked/screens/post/post.dart';
 import 'package:u_marked/screens/post/postIndex.dart';
+import 'package:excel/excel.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 
 class classDetail extends StatefulWidget {
@@ -175,7 +180,7 @@ class _classDetailState extends State<classDetail> {
           );
           break;
         case 4 :
-
+          loadExcel();
           break;
       }
     },
@@ -210,24 +215,50 @@ class _classDetailState extends State<classDetail> {
     ),
   );
 
-  // void loadExcel() async{
-  //   String classID = widget.classID;
-  //
-  //
-  //   QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
-  //       .collection('attendanceRecord')
-  //       .where('classID', isEqualTo: classID)
-  //       .get();
-  //   List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot.docs;
-  //
-  //   if(documents.isNotEmpty){
-  //     for (DocumentSnapshot<Map<String, dynamic>> document in documents){
-  //       String recordID = document.id;
-  //       var recordData = document.data() as Map<String, dynamic>;
-  //
-  //     }
-  //   }
-  // }
+  void loadExcel() async{
+    String classID = widget.classID;
+    var excel = Excel.createExcel();
+    var sheet = excel['Sheet1'];
+
+    // Add data to the sheet
+    sheet.appendRow(['Name', 'Age', 'City']);
+    sheet.appendRow(['John Doe', 25, 'New York']);
+    sheet.appendRow(['Jane Smith', 30, 'Los Angeles']);
+
+    // Get the file path
+    var filePath = await getFilePath();
+
+    // Save the Excel file
+    var excelBytes = excel.encode();
+    File(filePath).writeAsBytesSync(excelBytes!);
+
+    await launch(filePath, forceSafariVC: false, forceWebView: false);
+
+    // Display a message or perform further actions
+    print('Attendance exported to: $filePath');
+
+
+    // QuerySnapshot<Map<String, dynamic>> querySnapshot = await FirebaseFirestore.instance
+    //     .collection('attendanceRecord')
+    //     .where('classID', isEqualTo: classID)
+    //     .get();
+    // List<DocumentSnapshot<Map<String, dynamic>>> documents = querySnapshot.docs;
+    //
+    // if(documents.isNotEmpty){
+    //   for (DocumentSnapshot<Map<String, dynamic>> document in documents){
+    //     String recordID = document.id;
+    //     var recordData = document.data() as Map<String, dynamic>;
+    //
+    //   }
+    // }
+  }
+
+}
+
+Future<String> getFilePath() async {
+  Directory appDocumentsDirectory = await getApplicationDocumentsDirectory();
+  String appDocumentsPath = appDocumentsDirectory.path;
+  return '$appDocumentsPath/exported_data.xlsx';
 }
 
 Container showClassDetail(){

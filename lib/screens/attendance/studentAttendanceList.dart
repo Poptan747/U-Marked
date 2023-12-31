@@ -80,6 +80,12 @@ class _studentAttendanceListState extends State<studentAttendanceList> {
             case 5:
               _statusMap[studentAttRecordID] = 'Apply Leave';
               break;
+            case 6:
+              _statusMap[studentAttRecordID] = 'Apply Leave - Approved';
+              break;
+            case 7:
+              _statusMap[studentAttRecordID] = '(Absent) Apply Leave - Pending';
+              break;
             default:
               _statusMap[studentAttRecordID] = 'Absent';
               break;
@@ -186,7 +192,11 @@ Widget getIconForAttendanceStatus(String status) {
     case 'Leave Early':
       return Icon(Icons.exit_to_app); // or any other icon for 'Leave Early'
     case 'Apply Leave':
-      return Icon(Icons.sick_outlined); // or any other icon for 'Sick'
+      return Icon(Icons.edit_document); // or any other icon for 'Sick'
+    case 'Apply Leave - Approved':
+      return Icon(Icons.library_add_check);
+    case '(Absent) Apply Leave - Pending':
+      return Icon(Icons.edit_document);
     default:
       return Icon(Icons.help); // or any default icon for unknown status
   }

@@ -43,7 +43,7 @@ exports.checkAttendanceStatus = functions.pubsub
           studentAttendanceListSnapshot.forEach(async (studentAttendance) => {
             const attendanceStatus = studentAttendance.data().attendanceStatus;
 
-            if (attendanceStatus === 0) {
+            if (attendanceStatus === 0 || attendanceStatus === 5) {
               const studentAttendanceSessionSnapshot =
                 await studentAttendance.ref
                   .collection("studentAttendanceSession")
@@ -53,6 +53,10 @@ exports.checkAttendanceStatus = functions.pubsub
                 // No data in studentAttendanceSession, perform your logic here
                 await studentAttendance.ref.update({ attendanceStatus: 2 });
                 console.log("No data in studentAttendanceSession");
+              } else if (attendanceStatus === 5) {
+                // apply leave absent
+                await studentAttendance.ref.update({ attendanceStatus: 7 });
+                console.log("apply leave absent in studentAttendanceSession");
               } else {
                 // Data exists in studentAttendanceSession, perform other logic if needed
                 let sessionMatchFound = false;
