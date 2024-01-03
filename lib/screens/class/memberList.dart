@@ -98,7 +98,7 @@ class _memberListState extends State<memberList> {
       var lecturerData = lecturersCollection.data() as Map<String, dynamic>;
       setState(() {
         _nameMap[UID] = lecturerData['name'];
-        _iDMap = lecturerData['lecturerID'];
+        _iDMap[UID] = lecturerData['lecturerID'];
       });
     }
   }

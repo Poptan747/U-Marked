@@ -82,7 +82,7 @@ class _editClassPageState extends State<editClassPage> {
     var locationData = await locationCollection.data() as Map<String, dynamic>;
     List<Map<String, dynamic>> classSessionData = await fetchClassSessionDataFromFirebase();
     setWeekdaySwitches(classSessionData);
-    getSelectedLec(classData);
+    // getSelectedLec(classData);
 
     setState(() {
       classNameController.text = classData['className'];
@@ -256,9 +256,9 @@ class _editClassPageState extends State<editClassPage> {
 
   List<Map<String, dynamic>> _filteredData(bool isStudent) {
     if(isStudent){
-      final String searchTerm = _searchController.text.toLowerCase();
+      final String searchTerm = _searchStudentController.text.toLowerCase();
       return _studentData.where((item) {
-        return item['name'].toLowerCase().contains(searchTerm) ||  item['studentID'].toLowerCase().contains(searchTerm.toLowerCase());
+        return item['batch'].toLowerCase().contains(searchTerm) ||  item['studentID'].toLowerCase().contains(searchTerm.toLowerCase());
       }).toList();
     }else{
       final String searchTerm = _searchController.text.toLowerCase();
@@ -362,7 +362,12 @@ class _editClassPageState extends State<editClassPage> {
     String classLecID = classData['lecturerID'];
     //set class lecID
     if(classLecID.contains(lecID)){
-      classLecID = classLecID.replaceAll(lecID, '').replaceAll(",", "");
+      String temp = '$lecID, ';
+      if(classLecID == lecID){
+        classLecID = classLecID.replaceAll(lecID, '').replaceAll(",", "");
+      }else{
+        classLecID = classLecID.replaceAll(temp, '');
+      }
       print(classLecID.trim());
       FirebaseFirestore.instance.collection('classes').doc(classId).update({
         'lecturerID' : classLecID.trim(),
@@ -438,6 +443,7 @@ class _editClassPageState extends State<editClassPage> {
         _errorMessage = 'Please Complete the Class Information Form';
       });
     }
+    print('LEC HERE ${_selectedLec}');
     if(_selectedLec.isEmpty){
       var classCollection = await FirebaseFirestore.instance.collection('classes').doc(widget.documentID).get();
       var classData = await classCollection.data() as Map<String, dynamic>;
@@ -506,6 +512,8 @@ class _editClassPageState extends State<editClassPage> {
         }
       }
       List<String> uniqueList = lecturerIDs.toSet().toList();
+
+      print('CHECK EMPTY ${lecturerIDs.isEmpty}');
 
       //create class
       FirebaseFirestore.instance.collection('classes').doc(widget.documentID).update({
@@ -848,6 +856,7 @@ class _editClassPageState extends State<editClassPage> {
                                               String formattedTime = DateFormat.jm().format(selectedDateTime);
                                               setState(() {
                                                 startFromControllers[index].text = formattedTime;
+                                                endAtControllers[index].text = '';
                                               });
                                             }else{
                                               print("Date is not selected");

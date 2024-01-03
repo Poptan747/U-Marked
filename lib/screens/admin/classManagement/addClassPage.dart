@@ -156,9 +156,9 @@ class _addClassPageState extends State<addClassPage> {
 
   List<Map<String, dynamic>> _filteredData(bool isStudent) {
     if(isStudent){
-      final String searchTerm = _searchController.text.toLowerCase();
+      final String searchTerm = _searchStudentController.text.toLowerCase();
       return _studentData.where((item) {
-        return item['name'].toLowerCase().contains(searchTerm) ||  item['studentID'].toLowerCase().contains(searchTerm.toLowerCase());
+        return item['batch'].toLowerCase().contains(searchTerm) ||  item['studentID'].toLowerCase().contains(searchTerm.toLowerCase());
       }).toList();
     }else{
       final String searchTerm = _searchController.text.toLowerCase();
@@ -581,6 +581,7 @@ class _addClassPageState extends State<addClassPage> {
                                             String formattedTime = DateFormat.jm().format(selectedDateTime);
                                             setState(() {
                                               startFromControllers[index].text = formattedTime;
+                                              endAtControllers[index].text = '';
                                             });
                                           }else{
                                             print("Date is not selected");

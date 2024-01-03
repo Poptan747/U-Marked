@@ -36,7 +36,7 @@ class _inboxPageState extends State<inboxPage> {
     super.initState();
     defaultData();
     loadData();
-    print('inbix');
+    // print('inbix');
   }
 
   defaultData(){

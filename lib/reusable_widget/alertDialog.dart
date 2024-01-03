@@ -276,7 +276,8 @@ class _phoneVerificationDialogState extends State<phoneVerificationDialog> {
     if(!_isError){
       Navigator.pop(context);
       showDialog(context: context, builder: (BuildContext context) {
-        return verifyOTPDialog(phoneNum: phoneNum);
+        return Container(width: MediaQuery.of(context).size.width* 0.9,
+            child: verifyOTPDialog(phoneNum: phoneNum));
       });
     }
   }
@@ -466,7 +467,7 @@ class _verifyOTPDialogState extends State<verifyOTPDialog> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             const SizedBox(height: 5),
-            const Text('Verify Phone OTP ',textAlign: TextAlign.center,
+            const Text('Verify Phone OTP',textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.normal,
@@ -484,9 +485,9 @@ class _verifyOTPDialogState extends State<verifyOTPDialog> {
             _errorMessage.trim().isNotEmpty ? Text(_errorMessage,style: const TextStyle(color: Colors.red))
                 : const SizedBox(),
             OtpTextField(
-              fieldWidth: 40,
+              fieldWidth: 35,
               numberOfFields: 6,
-              borderColor: Colors.blue,
+              borderColor: Colors.black,
               showFieldAsBox: true,
               onSubmit: (String verificationCode){
                 _submit(verificationCode);

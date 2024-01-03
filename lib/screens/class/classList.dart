@@ -42,6 +42,7 @@ class _myClassListState extends State<myClassList> {
       _timeMap.clear();
       _dateMap.clear();
       _passData.clear();
+      _imagePathMap.clear();
       _isStudent = true;
       _noData = true;
       _uID='';
@@ -180,8 +181,12 @@ class _myClassListState extends State<myClassList> {
           itemBuilder: (context, index) {
             var orderData = orderSnapshot.data!.docs[index].data() as Map<String, dynamic>;
             var classID = orderData['classID'];
+            bool isEmpty = false;
+            if (_imagePathMap[classID] == null && _imagePathMap[classID]!.trim().isEmpty) {
+              isEmpty = true;
+            }
             return GFListTile(
-              avatar: _imagePathMap[classID]!.trim().isEmpty ?
+              avatar: isEmpty ?
               const GFAvatar(
                 backgroundImage: AssetImage('images/user/default_user.jpg'),
                 size: GFSize.LARGE,

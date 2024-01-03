@@ -374,9 +374,10 @@ class _FormBottomSheetState extends State<FormBottomSheet> {
                         String formattedTime = DateFormat.jm().format(selectedDateTime);
                         setState(() {
                           startAtTimeController.text = formattedTime;
+                          endAtTimeController.text = '';
                         });
                       }else{
-                        print("Date is not selected");
+                        print("Time is not selected");
                       }
                     },
                   ),

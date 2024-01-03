@@ -21,6 +21,8 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isStudent = false;
   bool _isEmailVerify = false;
   bool _isPhoneVerify = false;
+  bool _fireEmailVerified = false;
+  bool _firePhoneVerified = false;
   String _name = '';
   String _studentID = '';
   String _batch = '';
@@ -70,6 +72,8 @@ class _ProfilePageState extends State<ProfilePage> {
       _phoneNum = user.phoneNumber.toString();
       _imageUrl = data['imagePath'];
       _isEmailVerify = user.emailVerified;
+      _fireEmailVerified = data['isEmailVerified'];
+      _firePhoneVerified = data['isPhoneVerified'];
     });
   }
 
@@ -150,7 +154,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       children: [
                         Badge(
                           label: Text('  '),
-                          backgroundColor: _isEmailVerify? Colors.green : Colors.red,
+                          backgroundColor: _isEmailVerify || _fireEmailVerified? Colors.green : Colors.red,
                           child: GFButton(
                             padding: const EdgeInsets.symmetric(horizontal: 90),
                             text: "Email Verification",
@@ -158,7 +162,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             shape: GFButtonShape.pills,
                             type: GFButtonType.outline,
                             size: GFSize.LARGE,
-                            onPressed: _isEmailVerify? null :(){
+                            onPressed: _isEmailVerify || _fireEmailVerified? null :(){
                               sendEmailVerify();
                               Alerts().emailVerificationDialog(context, _isEmailVerify, _email);
                             },
@@ -166,7 +170,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                         Badge(
                           label: Text('  '),
-                          backgroundColor: _isPhoneVerify? Colors.green : Colors.red,
+                          backgroundColor: _isPhoneVerify || _firePhoneVerified? Colors.green : Colors.red,
                           child: GFButton(
                             padding: const EdgeInsets.symmetric(horizontal: 90),
                             text: "Phone Verification",
@@ -174,24 +178,24 @@ class _ProfilePageState extends State<ProfilePage> {
                             shape: GFButtonShape.pills,
                             type: GFButtonType.outline,
                             size: GFSize.LARGE,
-                            onPressed: !_isPhoneVerify?(){
+                            onPressed: !_isPhoneVerify && !_firePhoneVerified? (){
                               showDialog(context: context, builder: (BuildContext context) {
                                 return phoneVerificationDialog();
                               });
                             } : null,
                           ),
                         ),
-                        GFButton(
-                          padding: const EdgeInsets.symmetric(horizontal: 90),
-                          text: "Edit Profile",
-                          icon: const Icon(Icons.edit_outlined,color: Colors.blueAccent),
-                          shape: GFButtonShape.pills,
-                          type: GFButtonType.outline,
-                          size: GFSize.LARGE,
-                          onPressed: (){
-
-                          },
-                        ),
+                        // GFButton(
+                        //   padding: const EdgeInsets.symmetric(horizontal: 90),
+                        //   text: "Edit Profile",
+                        //   icon: const Icon(Icons.edit_outlined,color: Colors.blueAccent),
+                        //   shape: GFButtonShape.pills,
+                        //   type: GFButtonType.outline,
+                        //   size: GFSize.LARGE,
+                        //   onPressed: (){
+                        //
+                        //   },
+                        // ),
                         GFButton(
                           padding: const EdgeInsets.symmetric(horizontal: 90),
                           text: "Logout",

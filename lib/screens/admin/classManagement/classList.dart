@@ -113,17 +113,21 @@ class _adminClassListState extends State<adminClassList> {
                    }
 
                    return SingleChildScrollView(
+                     scrollDirection: Axis.horizontal,
                      child: Container(
-                       width: MediaQuery.of(context).size.width,
-                       child: DataTable(
-                         columnSpacing: 30,
-                         dataRowHeight: 70,
-                         columns: const [
-                           DataColumn(label: Text('Subject')),
-                           DataColumn(label: Text('Class Session')),
-                           DataColumn(label: Text('Action')),
+                       child: Column(
+                         children: [
+                           DataTable(
+                             columnSpacing: 30,
+                             dataRowHeight: 70,
+                             columns: const [
+                               DataColumn(label: Text('Subject')),
+                               DataColumn(label: Text('Class Session')),
+                               DataColumn(label: Text('Action')),
+                             ],
+                             rows: rows,
+                           ),
                          ],
-                         rows: rows,
                        ),
                      ),
                    );

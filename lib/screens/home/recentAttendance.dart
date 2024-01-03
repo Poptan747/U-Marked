@@ -1,11 +1,16 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:u_marked/screens/attendance/attendanceDashboard.dart';
+import 'package:u_marked/screens/profile/profilePage.dart';
 
 class RecentAttendance extends StatefulWidget {
-  const RecentAttendance({Key? key, required this.isStudent}) : super(key: key);
+  const RecentAttendance({Key? key, required this.isStudent, required this.isEmailVerify, required this.isPhoneVerify}) : super(key: key);
   final bool isStudent;
+  final bool isEmailVerify;
+  final bool isPhoneVerify;
 
   @override
   State<RecentAttendance> createState() => _RecentAttendanceState();
@@ -247,7 +252,7 @@ class _RecentAttendanceState extends State<RecentAttendance> {
             );
           }else{
             return ListView.builder(
-              itemCount: 4,
+              itemCount: min(orderSnapshot.data!.docs.length, 4),
               shrinkWrap: true,
               itemBuilder: (context, index) {
 
@@ -265,11 +270,34 @@ class _RecentAttendanceState extends State<RecentAttendance> {
                       padding: const EdgeInsets.all(8.0),
                       child: GestureDetector(
                         onTap: (){
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => AttendanceDashboard(isStudent: isStudent,attendanceRecordID: recordID),
-                            ),
-                          );
+                          if(widget.isPhoneVerify && widget.isEmailVerify){
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => AttendanceDashboard(isStudent: isStudent,attendanceRecordID: recordID),
+                              ),
+                            );
+                          }else{
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) => AlertDialog(
+                                title: const Text('Verify Account'),
+                                content: const Text('Please verify your account before proceeding'),
+                                actions: <Widget>[
+                                  TextButton(
+                                    onPressed: () async {
+                                      Navigator.pop(context);
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) => const ProfilePage(),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text('OK'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
                         },
                         child: Card(
                           child: ListTile(
@@ -323,7 +351,7 @@ class _RecentAttendanceState extends State<RecentAttendance> {
             );
           }else{
             return ListView.builder(
-              itemCount: 4,
+              itemCount: min(orderSnapshot.data!.docs.length, 4),
               shrinkWrap: true,
               itemBuilder: (context, index) {
                 String attRecordID = orderSnapshot.data!.docs[index].id;
@@ -337,11 +365,34 @@ class _RecentAttendanceState extends State<RecentAttendance> {
                       padding: const EdgeInsets.all(8.0),
                       child: GestureDetector(
                         onTap: (){
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => AttendanceDashboard(isStudent: isStudent,attendanceRecordID: attRecordID),
-                            ),
-                          );
+                          if(widget.isPhoneVerify && widget.isEmailVerify){
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => AttendanceDashboard(isStudent: isStudent,attendanceRecordID: attRecordID),
+                              ),
+                            );
+                          }else{
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) => AlertDialog(
+                                title: const Text('Verify Account'),
+                                content: const Text('Please verify your account before proceeding'),
+                                actions: <Widget>[
+                                  TextButton(
+                                    onPressed: () async {
+                                      Navigator.pop(context);
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) => const ProfilePage(),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text('OK'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
                         },
                         child: Card(
                           child: ListTile(

@@ -376,6 +376,9 @@ class _markedBottomSheetState extends State<markedBottomSheet> {
   }
 
   void _initGeolocator() {
+    setState(() {
+      isLoading = true;
+    });
     _determinePosition();
     const LocationSettings locationSettings = LocationSettings(
       accuracy: LocationAccuracy.best,

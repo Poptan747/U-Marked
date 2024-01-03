@@ -23,6 +23,8 @@ class _homePageState extends State<homePage> {
   String _studentID = '';
   String _lecturerID = '';
   String _batch = '';
+  bool _isEmailVerify = false;
+  bool _isPhoneVerify = false;
   var _isStudent = true;
 
   void setupPushNotification() async{
@@ -54,6 +56,8 @@ class _homePageState extends State<homePage> {
         }else{
           _isStudent = false;
         }
+        _isEmailVerify = data['isEmailVerified'];
+        _isPhoneVerify = data['isPhoneVerified'];
         _name = userDetailmap['name'];
         _studentID = userDetailmap['studentID'];
         _batch = userDetailmap['batch'];
@@ -130,11 +134,34 @@ class _homePageState extends State<homePage> {
                                   Column(
                                     children: [
                                       IconButton(onPressed: (){
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (context) => myClassList(),
-                                          ),
-                                        );
+                                        if(_isPhoneVerify && _isEmailVerify){
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) => myClassList(),
+                                            ),
+                                          );
+                                        }else{
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) => AlertDialog(
+                                              title: const Text('Verify Account'),
+                                              content: const Text('Please verify your account before proceeding'),
+                                              actions: <Widget>[
+                                                TextButton(
+                                                  onPressed: () async {
+                                                    Navigator.pop(context);
+                                                    Navigator.of(context).push(
+                                                      MaterialPageRoute(
+                                                        builder: (context) => const ProfilePage(),
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: const Text('OK'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        }
                                       },
                                         icon: Icon(Icons.school),
                                         color: Colors.blue.shade900,),
@@ -144,11 +171,34 @@ class _homePageState extends State<homePage> {
                                   Column(
                                     children: [
                                       IconButton(onPressed: (){
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (context) => MyAttendance(),
-                                          ),
-                                        );
+                                        if(_isPhoneVerify && _isEmailVerify){
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) => MyAttendance(),
+                                            ),
+                                          );
+                                        }else{
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) => AlertDialog(
+                                              title: const Text('Verify Account'),
+                                              content: const Text('Please verify your account before proceeding'),
+                                              actions: <Widget>[
+                                                TextButton(
+                                                  onPressed: () async {
+                                                    Navigator.pop(context);
+                                                    Navigator.of(context).push(
+                                                      MaterialPageRoute(
+                                                        builder: (context) => const ProfilePage(),
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: const Text('OK'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        }
                                       }, icon: Icon(Icons.history_edu),color: Colors.blue.shade900),
                                       Expanded(child: Text('My Attendance',style: Theme.of(context).textTheme.labelLarge))
                                     ],
@@ -170,7 +220,7 @@ class _homePageState extends State<homePage> {
                   const SizedBox(height: 20),
                   const Divider(color: Colors.white,thickness: 3,),
                   const SizedBox(height: 20),
-                  RecentAttendance(isStudent: _isStudent)
+                  RecentAttendance(isStudent: _isStudent,isEmailVerify: _isEmailVerify,isPhoneVerify: _isPhoneVerify,)
                 ],
               ),
             ),
