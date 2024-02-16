@@ -57,6 +57,7 @@ exports.checkAttendanceStatus = functions.pubsub
                 // apply leave absent
                 await studentAttendance.ref.update({ attendanceStatus: 7 });
                 console.log("apply leave absent in studentAttendanceSession");
+                
               } else {
                 // Data exists in studentAttendanceSession, perform other logic if needed
                 let sessionMatchFound = false;
